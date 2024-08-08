@@ -7,7 +7,7 @@ type Account struct{
 	Password string `json:"password" gorm:"column:password"`
 }
 
-func (a *Account)NewAccount(email, password string) *Account{
+func NewAccount(email, password string) *Account{
 	return &Account{
 		Email: email,
 		Password: password,
