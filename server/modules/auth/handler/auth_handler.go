@@ -8,7 +8,7 @@ import (
 )
 
 type IAccountService interface{
-	Login(ctx *gin.Context, account *entity.Account) error
+	Login(ctx *gin.Context, account entity.Account) (string, error) 
 }
 
 type AuthHandler struct{
@@ -31,13 +31,14 @@ func (c *AuthHandler)Login() func (ctx *gin.Context){
 			return
 		}
 
-		if err := c.service.Login(ctx, account); err != nil{
-			ctx.JSON(http.StatusBadRequest, err)
+		jwtToken, err := c.service.Login(ctx, *account)
+		if err != nil{
+			ctx.JSON(http.StatusUnauthorized, err)
 			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{
-			"message":"ok",
+			"token": jwtToken,
 			})
 	}
 }
