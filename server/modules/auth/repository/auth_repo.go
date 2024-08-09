@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/quocsi014/common"
+	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
 	"gorm.io/gorm"
 )
@@ -23,7 +23,6 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository{
 func (ar *AuthRepository)GetAccount(ctx *gin.Context, email string) (*entity.Account, error){
 	account := entity.Account{}
 	if err := ar.db.Where("email = ?", email).First(&account).Error; err != nil{
-		fmt.Println(err.Error())
 		if errors.Is(err, gorm.ErrRecordNotFound){
 			return nil, app_error.ErrRecordNotFound
 		}else{
