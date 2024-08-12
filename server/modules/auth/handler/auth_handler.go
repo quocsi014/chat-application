@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -22,9 +21,10 @@ type AuthHandler struct{
 	emailService service.EmailService
 }
 
-func NewAuthHandler(service IAccountService) *AuthHandler{
+func NewAuthHandler(service IAccountService, emailService service.EmailService) *AuthHandler{
 	return &AuthHandler{
 		service: service,
+		emailService: emailService,
 	}
 }
 
@@ -62,9 +62,8 @@ func (handler *AuthHandler)EmailRegister() func (ctx *gin.Context){
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, err)
 			return
 		}
-		fmt.Println("a")	
 		if err := handler.emailService.SendOtp(email, otp); err != nil{
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, err)
+			ctx.JSON(http.StatusInternalServerError, err)
 			return
 		}
 

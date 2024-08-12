@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,6 @@ import (
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 type IAuthRepository interface{
@@ -73,8 +73,9 @@ func (as *AuthService)CreateEmailVerification(ctx *gin.Context, email, otp strin
 	if err == nil {
 		return err
 	}
-	if errors.Is(err, gorm.ErrRecordNotFound){	
+	if errors.Is(err, app_error.ErrRecordNotFound){	
 		return as.otpRepository.SetOtp(ctx.Request.Context(), email, otp)
 	}
+	fmt.Println(err.Error())
 	return app_error.ErrDatabase(err)
 }

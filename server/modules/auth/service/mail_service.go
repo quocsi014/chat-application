@@ -4,15 +4,18 @@ import (
 	"log"
 	"net/smtp"
 	"os"
+
+	"github.com/joho/godotenv"
 	"github.com/quocsi014/common/app_error"
 )
+
 
 var (
 	gsmtpHost string = "smtp.gmail.com"
 	gsmtpPort string = "587"
 	senderEmail string = "chatapp.verify@gmail.com"
-	senderPassword string = os.Getenv("GSMTP_PASSWORD")
 )
+
 type EmailService struct{
 	auth smtp.Auth
 	sender string
@@ -20,7 +23,13 @@ type EmailService struct{
 	smtpPort string
 }
 func NewGEmailService() *EmailService{
-	auth := smtp.PlainAuth("", senderEmail, senderPassword, gsmtpHost)
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
+	auth := smtp.PlainAuth("", senderEmail, os.Getenv("GSMTP_PASSWORD"), gsmtpHost)
 	return &EmailService{
 		auth: auth,
 		sender: senderEmail,
