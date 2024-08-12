@@ -2,8 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"

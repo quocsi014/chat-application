@@ -2,12 +2,8 @@ package service
 
 import (
 	"log"
-	"math/rand"
 	"net/smtp"
 	"os"
-	"strconv"
-	"time"
-
 	"github.com/quocsi014/common/app_error"
 )
 
@@ -17,15 +13,15 @@ var (
 	senderEmail string = "chatapp.verify@gmail.com"
 	senderPassword string = os.Getenv("GSMTP_PASSWORD")
 )
-type MailService struct{
+type EmailService struct{
 	auth smtp.Auth
 	sender string
 	smtpHost string
 	smtpPort string
 }
-func NewGMailService() *MailService{
+func NewGEmailService() *EmailService{
 	auth := smtp.PlainAuth("", senderEmail, senderPassword, gsmtpHost)
-	return &MailService{
+	return &EmailService{
 		auth: auth,
 		sender: senderEmail,
 		smtpHost: gsmtpHost,
@@ -33,7 +29,7 @@ func NewGMailService() *MailService{
 	}
 }
 
-func (ms *MailService)SendOtp(receiver ,otp string) error{
+func (ms *EmailService)SendOtp(receiver ,otp string) error{
 	err := smtp.SendMail(ms.smtpHost + ":" + ms.smtpPort, ms.auth, ms.sender, []string{receiver}, []byte(otp))
 	if err != nil{
 		log.Fatal(err)
