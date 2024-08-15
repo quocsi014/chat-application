@@ -2,7 +2,7 @@ package repository
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
+	"context"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
 	"gorm.io/gorm"
@@ -18,7 +18,7 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository{
 	}
 }
 
-func (ar *AuthRepository)GetAccount(ctx *gin.Context, email string) (*entity.Account, error){
+func (ar *AuthRepository)GetAccount(ctx context.Context, email string) (*entity.Account, error){
 	account := entity.Account{}
 	if err := ar.db.Where("email = ?", email).First(&account).Error; err != nil{
 		if errors.Is(err, gorm.ErrRecordNotFound){

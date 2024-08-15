@@ -1,4 +1,4 @@
-package common
+package app_error
 
 import (
 	"errors"
@@ -29,8 +29,17 @@ func ErrInternal(rootError error) *AppError{
 	return &AppError{
 		StatusCode: http.StatusInternalServerError,
 		RootError: rootError,
-		Message: "Something went wrong, pls come back later",
+		Message: "Something went wrong in server, pls come back later",
 		Key: "INTERNAL_ERROR",
+	}
+}
+
+func ErrDatabase(rootError error) *AppError{
+	return &AppError{
+		StatusCode: http.StatusInternalServerError,
+		RootError: rootError,
+		Message: "Something went wrong with database",
+		Key: "DB_ERROR",
 	}
 }
 

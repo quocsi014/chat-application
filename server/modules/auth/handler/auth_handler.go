@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -11,8 +12,8 @@ import (
 )
 
 type IAccountService interface{
-	Login(ctx *gin.Context, account entity.Account) (string, error)
-	CreateEmailVerification(ctx *gin.Context, email, otp string) error
+	Login(ctx context.Context, account entity.Account) (string, error)
+	CreateEmailVerification(ctx context.Context, email, otp string) error
 }
 
 
@@ -38,7 +39,7 @@ func (c *AuthHandler)Login() func (ctx *gin.Context){
 			return
 		}
 
-		jwtToken, err := c.service.Login(ctx, *account)
+		jwtToken, err := c.service.Login(ctx.Request.Context(), *account)
 		if err != nil{
 			ctx.JSON(http.StatusUnauthorized, err)
 			return
@@ -58,7 +59,7 @@ func (handler *AuthHandler)EmailRegister() func (ctx *gin.Context){
 	return func(ctx *gin.Context){
 		otp := genOtp()
 		email := ctx.Query("email")
-		if err := handler.service.CreateEmailVerification(ctx, email, otp); err != nil{
+		if err := handler.service.CreateEmailVerification(ctx.Request.Context(), email, otp); err != nil{
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, err)
 			return
 		}

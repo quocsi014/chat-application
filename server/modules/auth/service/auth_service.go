@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
@@ -14,7 +12,7 @@ import (
 )
 
 type IAuthRepository interface{
-	GetAccount(ctx *gin.Context, email string) (*entity.Account, error)
+	GetAccount(ctx context.Context, email string) (*entity.Account, error)
 }
 
 type IOTPRepository interface{
@@ -46,7 +44,7 @@ func (as *AuthService)generateJwtToken(userId string) (string, error){
 }
 
 
-func (as *AuthService) Login(ctx *gin.Context, account entity.Account) (string, error){
+func (as *AuthService) Login(ctx context.Context, account entity.Account) (string, error){
 	a, err := as.repository.GetAccount(ctx, account.Email)
 	if err != nil{
 		if errors.Is(err, app_error.ErrRecordNotFound){
@@ -68,13 +66,13 @@ func (as *AuthService) Login(ctx *gin.Context, account entity.Account) (string, 
 
 }
 
-func (as *AuthService)CreateEmailVerification(ctx *gin.Context, email, otp string) error {
+func (as *AuthService)CreateEmailVerification(ctx context.Context, email, otp string) error {
 	_, err := as.repository.GetAccount(ctx, email)
 	if err == nil {
 		return err
 	}
 	if errors.Is(err, app_error.ErrRecordNotFound){	
-		return as.otpRepository.SetOtp(ctx.Request.Context(), email, otp)
+		return as.otpRepository.SetOtp(ctx, email, otp)
 	}
 	fmt.Println(err.Error())
 	return app_error.ErrDatabase(err)
