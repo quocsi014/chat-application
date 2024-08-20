@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 	"github.com/golang-jwt/jwt"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
@@ -43,7 +45,6 @@ func (as *AuthService)generateJwtToken(userId string) (string, error){
 	return t.SignedString([]byte(as.jwtSecretKey))
 }
 
-
 func (as *AuthService) Login(ctx context.Context, account entity.Account) (string, error){
 	a, err := as.repository.GetAccount(ctx, account.Email)
 	if err != nil{
@@ -77,3 +78,39 @@ func (as *AuthService)CreateEmailVerification(ctx context.Context, email, otp st
 	fmt.Println(err.Error())
 	return app_error.ErrDatabase(err)
 }
+
+func (as *AuthService)generateVerifyOtpToken(email string) (string, error){
+
+	jwtClaims := jwt.MapClaims{
+		"email": email,
+		"exp": time.Now().Add(time.Minute*5).Unix(),
+	}
+	t := jwt.NewWithClaims( jwt.SigningMethodHS256, jwtClaims)
+	return t.SignedString([]byte(as.jwtSecretKey))
+}
+
+func (as *AuthService)VerifyOTP(ctx context.Context, email, otp string) (string, error) {
+	storagedOtp, err := as.otpRepository.GetOtp(ctx, email)
+
+	if err != nil {
+		if err == redis.Nil{
+			return "", app_error.ErrUnauthenticatedError(err, "OTP is incorrect or expired")
+		}else{
+			return "", app_error.ErrDatabase(err)
+		}
+	}
+
+	if (otp != storagedOtp){
+		return "", app_error.ErrUnauthenticatedError(nil, "OTP is incorrect or expired")
+	}
+
+	token, err := as.generateVerifyOtpToken(email)
+
+	if err != nil{
+		fmt.Println(err.Error())
+		return "", app_error.ErrInternal(err)
+	}
+
+	return token, nil
+}
+

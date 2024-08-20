@@ -2,11 +2,13 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
 	"github.com/quocsi014/modules/auth/service"
 )
@@ -14,6 +16,7 @@ import (
 type IAccountService interface{
 	Login(ctx context.Context, account entity.Account) (string, error)
 	CreateEmailVerification(ctx context.Context, email, otp string) error
+	VerifyOTP(ctx context.Context, email, otp string) (string, error)	
 }
 
 
@@ -72,8 +75,33 @@ func (handler *AuthHandler)EmailRegister() func (ctx *gin.Context){
 
 	}
 }
+
+type OTPVerification struct{
+	Email string `json:"email"`
+	Otp string `json:"otp"`
+}
+
+func (handler *AuthHandler)VerifyOTP() func(ctx *gin.Context){
+	return func(ctx *gin.Context){
+		otpVerification := OTPVerification{}
+		if err := ctx.ShouldBind(&otpVerification); err != nil{
+			fmt.Println(err.Error())
+			ctx.JSON(http.StatusBadRequest, app_error.ErrInvalidRequest(err))
+			return
+		}
+		token, err := handler.service.VerifyOTP(ctx, otpVerification.Email, otpVerification.Otp)
+		if err != nil{
+			ctx.JSON(err.(*app_error.AppError).StatusCode, err)
+			return
+		}
+		ctx.JSON(http.StatusOK, gin.H{
+			"token": token,
+		})
+	}
+}
+
 func(handler *AuthHandler)SetupRoute(group *gin.RouterGroup){
 	group.POST("/login", handler.Login())
 	group.POST("/register/mail", handler.EmailRegister())
-
+	group.POST("/register/verify_otp", handler.VerifyOTP())
 }

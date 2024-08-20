@@ -12,7 +12,7 @@ type AppError struct{
 	Key string `json:"key"`
 }
 
-func (e *AppError)Error() string{
+func (e AppError)Error() string{
 	return e.RootError.Error()
 }
 
