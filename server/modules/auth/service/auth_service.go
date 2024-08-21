@@ -5,16 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
+	"github.com/google/uuid"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang-jwt/jwt"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type IAuthRepository interface{
 	GetAccount(ctx context.Context, email string) (*entity.Account, error)
+	InserAccount(ctx context.Context, account *entity.Account) error
 }
 
 type IOTPRepository interface{
@@ -114,3 +116,16 @@ func (as *AuthService)VerifyOTP(ctx context.Context, email, otp string) (string,
 	return token, nil
 }
 
+func (as *AuthService)Register(ctx context.Context, account *entity.Account) error{
+	accountID := uuid.NewString()
+	account.Id = accountID
+	if err := as.repository.InserAccount(ctx, account); err != nil{
+		if errors.Is(err, gorm.ErrDuplicatedKey){
+			return account.ErrUsernameExist()
+		}else{
+			return app_error.ErrDatabase(err)
+		}
+	}
+	return nil
+
+}

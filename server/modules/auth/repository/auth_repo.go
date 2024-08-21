@@ -30,3 +30,7 @@ func (ar *AuthRepository)GetAccount(ctx context.Context, email string) (*entity.
 	return &account, nil
 }
 
+func (ar *AuthRepository)InserAccount(ctx context.Context, account *entity.Account) error{
+	return ar.db.Create(&account).Error
+}
+

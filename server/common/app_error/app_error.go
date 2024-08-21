@@ -51,4 +51,24 @@ func ErrInvalidRequest(rootError error) *AppError{
 		Key: "INVALID_REQ_ERROR",
 	}
 }
+func ErrConflictData(rootError error, key string, message string) *AppError{
+	return &AppError{
+		StatusCode: http.StatusConflict,
+		RootError: rootError,
+		Message: message,
+		Key: key,
+	}
+}
 var ErrRecordNotFound error = errors.New("Record Not Found")
+
+type ErrorResponse struct{
+	Code int
+	Err error
+}
+func NewErrorResponseWithAppError(err error) *ErrorResponse{
+	appError := err.(*AppError)
+	return &ErrorResponse{
+		Code: appError.StatusCode,
+		Err: appError,
+	}
+}

@@ -2,12 +2,14 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/auth/entity"
 	"github.com/quocsi014/modules/auth/service"
@@ -17,6 +19,7 @@ type IAccountService interface{
 	Login(ctx context.Context, account entity.Account) (string, error)
 	CreateEmailVerification(ctx context.Context, email, otp string) error
 	VerifyOTP(ctx context.Context, email, otp string) (string, error)	
+	Register(ctx context.Context, account *entity.Account) error
 }
 
 
@@ -100,8 +103,62 @@ func (handler *AuthHandler)VerifyOTP() func(ctx *gin.Context){
 	}
 }
 
+func (handler *AuthHandler)VerifyEmailVerificationOTP() func(ctx *gin.Context){
+	return func(ctx *gin.Context){
+		tokenString := ctx.GetHeader("Authorization")
+		if tokenString == "" {
+			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "Token is required"))
+			ctx.Abort()
+			return
+		}
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+    // Kiểm tra phương pháp ký
+    			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+        			return nil, app_error.ErrUnauthenticatedError(errors.New(fmt.Sprintf("Unexpected signing method %v", token.Header["alg"])), "invalid token") 
+    			}
+    			return []byte("your_secret_key"), nil
+		})
+		if err != nil || !token.Valid {
+    			ctx.JSON(http.StatusUnauthorized, err)
+    			ctx.Abort()
+    			return
+		}
+
+		tokenClaims, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+            		ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "invalid token"))
+            		ctx.Abort()
+            		return
+        	}
+		tokenEmail := tokenClaims["email"].(string)
+		if tokenEmail != ctx.Param("email"){
+			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "Token is invalid"))
+			ctx.Abort()
+			return
+		}
+		ctx.Next()
+	}
+}
+
+func (handler *AuthHandler)Register() func(ctx *gin.Context){
+	return func(ctx *gin.Context){
+		account := entity.Account{}
+		if err := ctx.ShouldBind(&account); err != nil{
+			ctx.JSON(http.StatusBadRequest, app_error.ErrInvalidRequest(err))
+			return
+		}
+		if err := handler.service.Register(ctx, &account); err != nil{
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, errResponse.Err)
+			return
+		}
+		ctx.Status(http.StatusCreated)
+
+	}
+}
 func(handler *AuthHandler)SetupRoute(group *gin.RouterGroup){
 	group.POST("/login", handler.Login())
 	group.POST("/register/mail", handler.EmailRegister())
 	group.POST("/register/verify_otp", handler.VerifyOTP())
+	group.POST("register/:email", handler.VerifyEmailVerificationOTP(), handler.Register())
 }
