@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
@@ -19,6 +20,7 @@ type IAccountService interface{
 	Login(ctx context.Context, account entity.Account) (string, error)
 	CreateEmailVerification(ctx context.Context, email, otp string) error
 	VerifyOTP(ctx context.Context, email, otp string) (string, error)	
+	GetJwtSecretKey() string
 	Register(ctx context.Context, account *entity.Account) error
 }
 
@@ -105,21 +107,30 @@ func (handler *AuthHandler)VerifyOTP() func(ctx *gin.Context){
 
 func (handler *AuthHandler)VerifyEmailVerificationOTP() func(ctx *gin.Context){
 	return func(ctx *gin.Context){
-		tokenString := ctx.GetHeader("Authorization")
+		tokenString := strings.TrimPrefix(ctx.GetHeader("Authorization"), "Bearer ")
 		if tokenString == "" {
 			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "Token is required"))
 			ctx.Abort()
 			return
 		}
+		
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
     // Kiểm tra phương pháp ký
-    			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-        			return nil, app_error.ErrUnauthenticatedError(errors.New(fmt.Sprintf("Unexpected signing method %v", token.Header["alg"])), "invalid token") 
-    			}
-    			return []byte("your_secret_key"), nil
+    			if token.Method != jwt.SigningMethodHS256 {
+			    return nil, app_error.ErrUnauthenticatedError(errors.New(fmt.Sprintf("Unexpected signing method %v", token.Header["alg"])), "invalid token")
+			}
+    			return []byte(handler.service.GetJwtSecretKey()), nil
 		})
-		if err != nil || !token.Valid {
-    			ctx.JSON(http.StatusUnauthorized, err)
+		if err != nil {
+			if ve, ok := err.(*jwt.ValidationError); ok {
+        			if ve.Errors&jwt.ValidationErrorExpired != 0 {
+            				ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(err, "Token has expired"))
+        			} else {
+         	   			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(err, "Invalid token"))
+        			}
+    			} else {
+        			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(err, "Invalid token"))
+    			}
     			ctx.Abort()
     			return
 		}

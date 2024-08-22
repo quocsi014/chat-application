@@ -30,6 +30,10 @@ type AuthService struct{
 	jwtSecretKey string
 }
 
+func (as *AuthService)GetJwtSecretKey() string{
+	return as.jwtSecretKey
+}
+
 func NewAuthService(repo IAuthRepository, otpRepo IOTPRepository, jwtSecretKey string) *AuthService{
 	return &AuthService{
 		repository: repo,
@@ -123,6 +127,7 @@ func (as *AuthService)Register(ctx context.Context, account *entity.Account) err
 		if errors.Is(err, gorm.ErrDuplicatedKey){
 			return account.ErrUsernameExist()
 		}else{
+			fmt.Println(err.Error())
 			return app_error.ErrDatabase(err)
 		}
 	}
