@@ -44,9 +44,9 @@ func main() {
 		jwtSecretKey := os.Getenv("JWT_SECRET_KEY")
 		authGroup := v1Group.Group("/auth")
 		authRepo := repository.NewAuthRepository(db)
-		otpService := rds.NewOTPRepository(rdb, 3*time.Minute)
+		accountCachingRepository := rds.NewAccountCaching(rdb, time.Minute*5)
 		emailService := service.NewGEmailService()
-		authService := service.NewAuthService(authRepo, otpService, jwtSecretKey)
+		authService := service.NewAuthService(authRepo, accountCachingRepository, jwtSecretKey)
 		authHandler := handler.NewAuthHandler(authService, *emailService)
 		authHandler.SetupRoute(authGroup)
 

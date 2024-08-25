@@ -51,6 +51,14 @@ func ErrInvalidRequest(rootError error) *AppError{
 		Key: "INVALID_REQ_ERROR",
 	}
 }
+func ErrInvalidData(rootError error, message string) *AppError{
+	return &AppError{
+		StatusCode: http.StatusBadRequest,
+		RootError: rootError,
+		Message: message,
+		Key: "INVALID_DATA_ERROR",
+	}
+}
 func ErrConflictData(rootError error, key string, message string) *AppError{
 	return &AppError{
 		StatusCode: http.StatusConflict,

@@ -4,24 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/quocsi014/common/app_error"
+	"github.com/quocsi014/helper"
+	"github.com/quocsi014/middleware"
 	"github.com/quocsi014/modules/auth/entity"
 	"github.com/quocsi014/modules/auth/service"
 )
 
 type IAccountService interface{
 	Login(ctx context.Context, account entity.Account) (string, error)
-	CreateEmailVerification(ctx context.Context, email, otp string) error
-	VerifyOTP(ctx context.Context, email, otp string) (string, error)	
 	GetJwtSecretKey() string
-	Register(ctx context.Context, account *entity.Account) error
+	Register(ctx context.Context, account entity.Account) (string, error)
+	VerifyAccount(ctx context.Context, email string) (string, error)
 }
 
 
@@ -59,51 +58,7 @@ func (c *AuthHandler)Login() func (ctx *gin.Context){
 	}
 }
 
-func genOtp() string{
-	return strconv.Itoa(rand.Intn(9000) + 1000)
-}
 
-func (handler *AuthHandler)EmailRegister() func (ctx *gin.Context){
-	return func(ctx *gin.Context){
-		otp := genOtp()
-		email := ctx.Query("email")
-		if err := handler.service.CreateEmailVerification(ctx.Request.Context(), email, otp); err != nil{
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, err)
-			return
-		}
-		if err := handler.emailService.SendOtp(email, otp); err != nil{
-			ctx.JSON(http.StatusInternalServerError, err)
-			return
-		}
-
-		ctx.Status(http.StatusOK)
-
-	}
-}
-
-type OTPVerification struct{
-	Email string `json:"email"`
-	Otp string `json:"otp"`
-}
-
-func (handler *AuthHandler)VerifyOTP() func(ctx *gin.Context){
-	return func(ctx *gin.Context){
-		otpVerification := OTPVerification{}
-		if err := ctx.ShouldBind(&otpVerification); err != nil{
-			fmt.Println(err.Error())
-			ctx.JSON(http.StatusBadRequest, app_error.ErrInvalidRequest(err))
-			return
-		}
-		token, err := handler.service.VerifyOTP(ctx, otpVerification.Email, otpVerification.Otp)
-		if err != nil{
-			ctx.JSON(err.(*app_error.AppError).StatusCode, err)
-			return
-		}
-		ctx.JSON(http.StatusOK, gin.H{
-			"token": token,
-		})
-	}
-}
 
 func (handler *AuthHandler)VerifyEmailVerificationOTP() func(ctx *gin.Context){
 	return func(ctx *gin.Context){
@@ -147,29 +102,59 @@ func (handler *AuthHandler)VerifyEmailVerificationOTP() func(ctx *gin.Context){
 			ctx.Abort()
 			return
 		}
+		ctx.Set("token", token)
 		ctx.Next()
 	}
 }
 
 func (handler *AuthHandler)Register() func(ctx *gin.Context){
-	return func(ctx *gin.Context){
+	return func(ctx *gin.Context) {
 		account := entity.Account{}
 		if err := ctx.ShouldBind(&account); err != nil{
 			ctx.JSON(http.StatusBadRequest, app_error.ErrInvalidRequest(err))
-			return
 		}
-		if err := handler.service.Register(ctx, &account); err != nil{
+		token, err:= handler.service.Register(ctx, account)
+		if err != nil{
 			errResponse := app_error.NewErrorResponseWithAppError(err)
 			ctx.JSON(errResponse.Code, errResponse.Err)
 			return
 		}
-		ctx.Status(http.StatusCreated)
+		if err := handler.emailService.SendRegistrationVerification(*account.Email, token); err != nil{
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, errResponse.Err)
+		}
+		ctx.JSON(http.StatusOK, token)
+	}
+}
+func (handler *AuthHandler)VerifyRegistration() func(ctx *gin.Context){
+	return func(ctx *gin.Context){
+		token, exist := ctx.Get("token")
+		if !exist{
+			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "Token is required"))
+			return
+		}
+		tokenClaims, err := helper.GetMapClaims(token.(*jwt.Token))
+		if err != nil{
+			ctx.JSON(http.StatusUnauthorized, err)
+			return
+		}
+		email := tokenClaims["email"].(string)
+		accessToken, err := handler.service.VerifyAccount(ctx, email)
+		if err != nil{
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, errResponse.Err)
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, gin.H{
+			"token": accessToken,
+		})
 
 	}
 }
+
 func(handler *AuthHandler)SetupRoute(group *gin.RouterGroup){
 	group.POST("/login", handler.Login())
-	group.POST("/register/mail", handler.EmailRegister())
-	group.POST("/register/verify_otp", handler.VerifyOTP())
-	group.POST("register/:email", handler.VerifyEmailVerificationOTP(), handler.Register())
+	group.POST("/register", handler.Register())
+	group.POST("register/verify", middleware.VerifyToken(), handler.VerifyRegistration())
 }

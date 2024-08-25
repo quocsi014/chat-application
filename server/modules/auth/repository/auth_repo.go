@@ -34,3 +34,14 @@ func (ar *AuthRepository)InserAccount(ctx context.Context, account *entity.Accou
 	return ar.db.Create(&account).Error
 }
 
+func (ar *AuthRepository)GetAccountByUsername(ctx context.Context, username string) (*entity.Account, error){
+	account := entity.Account{}
+	if err := ar.db.Where("username = ?", username).First(&account).Error; err != nil{
+		if errors.Is(err, gorm.ErrRecordNotFound){
+			return nil, app_error.ErrRecordNotFound
+		}else{
+			return nil, err
+		}
+	}
+	return &account, nil
+}
