@@ -1,9 +1,8 @@
 
 function App() {
   return (
-    <div>Hello world</div>
+    <div className="w-screen h-screen"> hello world</div>
   )
 }
 
 export default App
-/home/quocsi/dev/chat-application/server/client/chat-application/src/App.jsx
