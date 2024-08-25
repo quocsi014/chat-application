@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"github.com/quocsi014/modules/auth/handler"
@@ -31,8 +32,9 @@ func main() {
 		Password: "",
 		DB:       0,
 	})
-
+	
 	r := gin.Default()
+	r.Use(cors.Default())
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",

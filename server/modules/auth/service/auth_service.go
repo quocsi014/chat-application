@@ -57,7 +57,23 @@ func (as *AuthService)generateJwtToken(userId string) (string, error){
 }
 
 func (as *AuthService) Login(ctx context.Context, account entity.Account) (string, error){
-	a, err := as.repository.GetAccount(ctx, *account.Email)
+
+	if account.Password == nil{
+		return "", entity.ErrBlankPassword
+	}
+
+	if account.Email == nil && account.Username == nil{
+		return "", app_error.ErrInvalidData(errors.New("Missing account"), "Email or username is required")
+	}
+
+
+	var a *entity.Account
+	var err error
+	if account.Email != nil{
+		a, err = as.repository.GetAccount(ctx, *account.Email)		
+	}else{
+		a, err = as.repository.GetAccountByUsername(ctx, *account.Username)
+	}
 	if err != nil{
 		if errors.Is(err, app_error.ErrRecordNotFound){
 			return "",app_error.ErrUnauthenticatedError(err, "Email or password is incorrect")	
@@ -146,6 +162,7 @@ func (as *AuthService) Register(ctx context.Context, account entity.Account) (st
 	if _, err := as.isEmailOrUsernameTaken(ctx, *account.Email, *account.Username); err != nil{
 		return "",err
 	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*account.Password), 10)
 	if err != nil {
 		return "", app_error.ErrInternal(err)
