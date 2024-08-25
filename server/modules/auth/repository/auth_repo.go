@@ -18,9 +18,9 @@ func NewAuthRepository(db *gorm.DB) *AuthRepository{
 	}
 }
 
-func (ar *AuthRepository)GetAccount(ctx context.Context, email string) (*entity.Account, error){
+func (ar *AuthRepository)GetAccount(ctx context.Context, user string) (*entity.Account, error){
 	account := entity.Account{}
-	if err := ar.db.Where("email = ?", email).First(&account).Error; err != nil{
+	if err := ar.db.Where("email = ? or username = ?", user, user).First(&account).Error; err != nil{
 		if errors.Is(err, gorm.ErrRecordNotFound){
 			return nil, app_error.ErrRecordNotFound
 		}else{

@@ -46,3 +46,8 @@ var (
 
 	ErrNilPassword = app_error.ErrInvalidData(errors.New("Missing Password"), "Password is required")
 )
+
+type LoginAccount struct{
+	Account *string `json:"account"`
+	Password *string `json:"password"`
+}

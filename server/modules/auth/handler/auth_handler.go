@@ -17,7 +17,7 @@ import (
 )
 
 type IAccountService interface{
-	Login(ctx context.Context, account entity.Account) (string, error)
+	Login(ctx context.Context, account entity.LoginAccount) (string, error)
 	GetJwtSecretKey() string
 	Register(ctx context.Context, account entity.Account) (string, error)
 	VerifyAccount(ctx context.Context, email string) (string, error)
@@ -38,7 +38,7 @@ func NewAuthHandler(service IAccountService, emailService service.EmailService) 
 
 func (c *AuthHandler)Login() func (ctx *gin.Context){
 	return func(ctx *gin.Context) {
-		var account *entity.Account = &entity.Account{}
+		var account *entity.LoginAccount = &entity.LoginAccount{}
 		if err := ctx.ShouldBind(account); err != nil{
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),

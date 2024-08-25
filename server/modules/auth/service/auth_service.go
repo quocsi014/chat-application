@@ -14,7 +14,7 @@ import (
 )
 
 type IAuthRepository interface{
-	GetAccount(ctx context.Context, email string) (*entity.Account, error)
+	GetAccount(ctx context.Context, user string) (*entity.Account, error)
 	GetAccountByUsername(ctx context.Context, username string) (*entity.Account, error)
 	InserAccount(ctx context.Context, account *entity.Account) error
 }
@@ -56,24 +56,17 @@ func (as *AuthService)generateJwtToken(userId string) (string, error){
 	return t.SignedString([]byte(as.jwtSecretKey))
 }
 
-func (as *AuthService) Login(ctx context.Context, account entity.Account) (string, error){
+func (as *AuthService) Login(ctx context.Context, account entity.LoginAccount) (string, error){
 
 	if account.Password == nil{
 		return "", entity.ErrBlankPassword
 	}
 
-	if account.Email == nil && account.Username == nil{
+	if account.Account == nil{
 		return "", app_error.ErrInvalidData(errors.New("Missing account"), "Email or username is required")
 	}
 
-
-	var a *entity.Account
-	var err error
-	if account.Email != nil{
-		a, err = as.repository.GetAccount(ctx, *account.Email)		
-	}else{
-		a, err = as.repository.GetAccountByUsername(ctx, *account.Username)
-	}
+	a, err := as.repository.GetAccount(ctx, *account.Account)
 	if err != nil{
 		if errors.Is(err, app_error.ErrRecordNotFound){
 			return "",app_error.ErrUnauthenticatedError(err, "Email or password is incorrect")	
