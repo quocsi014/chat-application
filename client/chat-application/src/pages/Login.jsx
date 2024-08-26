@@ -4,6 +4,7 @@ import { API_Login } from "../api/authAPI";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { setCookie } from "../utils/cookie";
+import LoadingButton from "../components/LoadingButton";
 
 function Login() {
   const [account, setAccount] = useState("");
@@ -11,14 +12,17 @@ function Login() {
   const [password, setPassword] = useState("");
   const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
 
+  const [isLogining, setIsLogining] = useState(false);
+
   const BLANK_FIELD_QUOTE = "This field can not be blank";
   let navigate = useNavigate();
 
-  useEffect(()=>{
-    document.title = "Login - Chat"
-  }, [])
+  useEffect(() => {
+    document.title = "Login - Chat";
+  }, []);
 
   const handleLogin = () => {
+    setIsLogining(true);
     API_Login(account, password)
       .then((result) => {
         setCookie("access_token", result.data.token, 30);
@@ -29,6 +33,9 @@ function Login() {
           setAccountErrorMessage(error.response.data.message);
           setPasswordErrorMessage(error.response.data.message);
         }
+      })
+      .finally(() => {
+        setIsLogining(false);
       });
   };
 
@@ -86,24 +93,19 @@ function Login() {
           </a>
         </div>
         {account != "" && password != "" ? (
-          <button
-            className="w-full bg-blue-500 py-2 text-xl font-semibold text-white rounded-xl"
-            onClick={() => {
-              handleLogin();
-            }}
-          >
-            Login
-          </button>
+          <LoadingButton
+            value="Login"
+            handleFunction={handleLogin}
+            disabled={false}
+            isLoading={isLogining}
+          />
         ) : (
-          <button
-            className="w-full bg-blue-200 py-2 text-xl font-semibold text-white rounded-xl"
-            onClick={() => {
-              handleLogin();
-            }}
-            disabled
-          >
-            Login
-          </button>
+          <LoadingButton
+            value="Login"
+            handleFunction={handleLogin}
+            disabled={true}
+            isLoading={isLogining}
+          />
         )}
       </div>
     </div>
