@@ -36,4 +36,6 @@ var(
 	ErrInvalidLastname = app_error.ErrInvalidData(errors.New("Lastname have invalid character"), "INVALID_LASTNAME", "Lastname have invalid character")
 
 	ErrLastnameMissing = app_error.ErrInvalidData(errors.New("Lastname missing"), "LASTNAME_MISSING", "Lastname is required")
+
+	ErrExistUser = app_error.ErrConflictData(errors.New("User has been initialized"), "INITIALIZED", "A user for this account has been previously created.")
 )
