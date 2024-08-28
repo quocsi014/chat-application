@@ -18,3 +18,11 @@ export const API_Register = (email, username, password) => {
   };
   return axios.post(`${API_URL}/auth/register`, data);
 };
+
+export const API_Verify = (token) => {
+  return axios.post(`${API_URL}/auth/verify`,{}, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
+}
