@@ -10,14 +10,12 @@ import (
 type Account struct{
 	Id string `json:"id" gorm:"column:id"`
 	Email *string `json:"email" gorm:"column:email"`
-	Username *string `json:"username" gorm:"column:username"`
 	Password *string `json:"password" gorm:"column:password"`
 }
 
-func NewAccount(email, username, password string) *Account{
+func NewAccount(email, password string) *Account{
 	return &Account{
 		Email: &email,
-		Username: &username,
 		Password: &password,
 	}
 }
@@ -26,19 +24,11 @@ func (a *Account)TableName() string{
 	return "accounts"
 }
 var (
-	ErrUsernameExist = app_error.ErrConflictData(errors.New("Username already exist"), "USERNAME_EXIST", "Username have been taken")
-
 	ErrEmailExist = app_error.ErrConflictData(errors.New("Email already exist"), "EMAIL_EXIST", "Email have been taken")
 
 	ErrInvaliEmail = app_error.ErrInvalidData(errors.New("Invalid email"), "INVALID_EMAIL", "This is not an email")
 
 	ErrNilEmail = app_error.ErrInvalidData(errors.New("Missing email"), "EMAIL_MISSING", "Email is required")
-
-	ErrBlankUsername = app_error.ErrInvalidData(errors.New("Username is blank"), "BLANK_USERNAME", "Username can not be blank")
-
-	ErrInvalidUsername = app_error.ErrInvalidData(errors.New("Invalid username"), "INVALID_USERNAME", "Username must have at least 5 characters")
-
-	ErrNilUsername = app_error.ErrInvalidData(errors.New("Missing username"), "USERNAME_MISSING", "Username is required")
 
 	ErrBlankPassword = app_error.ErrInvalidData(errors.New("Password blank"), "BLANK_PASSWORD", "Password can not be blank")
 

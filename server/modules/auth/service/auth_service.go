@@ -14,8 +14,7 @@ import (
 )
 
 type IAuthRepository interface{
-	GetAccount(ctx context.Context, user string) (*entity.Account, error)
-	GetAccountByUsername(ctx context.Context, username string) (*entity.Account, error)
+	GetAccount(ctx context.Context, email string) (*entity.Account, error)
 	InserAccount(ctx context.Context, account *entity.Account) error
 }
 
@@ -57,13 +56,12 @@ func (as *AuthService)generateJwtToken(userId string) (string, error){
 }
 
 func (as *AuthService) Login(ctx context.Context, account entity.LoginAccount) (string, error){
-
 	if account.Password == nil{
 		return "", entity.ErrBlankPassword
 	}
 
 	if account.Account == nil{
-		return "", app_error.ErrInvalidData(errors.New("Missing account"), "ACCOUNT_MISSING", "Email or username is required")
+		return "", app_error.ErrInvalidData(errors.New("Missing email"), "EMAIL_MISSING", "Email is required")
 	}
 
 	a, err := as.repository.GetAccount(ctx, *account.Account)
@@ -84,10 +82,9 @@ func (as *AuthService) Login(ctx context.Context, account entity.LoginAccount) (
 	}
 
 	return jwtToken, nil
-
 }
 
-func (as *AuthService)isEmailOrUsernameTaken(ctx context.Context, email, username string) (bool, error){
+func (as *AuthService)isEmailTaken(ctx context.Context, email string) (bool, error){
 	if _, err := as.repository.GetAccount(ctx, email); err == nil{
 		return true, app_error.ErrConflictData(nil, "EMAIL_EXIST", "Email has been taken")
 	}else{
@@ -95,18 +92,9 @@ func (as *AuthService)isEmailOrUsernameTaken(ctx context.Context, email, usernam
 			return false, app_error.ErrDatabase(err)
 		}
 	}
-	
-	if _, err := as.repository.GetAccountByUsername(ctx, username); err == nil{
-		return true, app_error.ErrConflictData(nil, "USERNAME_EXIST", "Username has been taken")
-	}else{
-		if !errors.Is(err, app_error.ErrRecordNotFound){
-			return false, app_error.ErrDatabase(err)
-		}
-	}
-
 	return false, nil
-
 }
+
 func (as *AuthService)generateJwtTokenWithEmail(email string) (string, error){
 	jwtClaims := jwt.MapClaims{
 		"email": email,
@@ -125,23 +113,12 @@ func validateEmail(email string) bool{
 }
 
 func (as *AuthService) Register(ctx context.Context, account entity.Account) (string, error){
-
-	//business logic
-
 	if account.Email == nil{
 		return "", entity.ErrNilEmail
 	}
 
-	if account.Username == nil{
-		return "", entity.ErrNilUsername
-	}
-
 	if account.Password == nil{
 		return "", entity.ErrNilPassword
-	}
-
-	if len(*account.Username) < 5{
-		return "", entity.ErrInvalidUsername
 	}
 
 	if len(*account.Password) < 6{
@@ -152,8 +129,8 @@ func (as *AuthService) Register(ctx context.Context, account entity.Account) (st
 		return "", entity.ErrInvaliEmail
 	}
 
-	if _, err := as.isEmailOrUsernameTaken(ctx, *account.Email, *account.Username); err != nil{
-		return "",err
+	if taken, err := as.isEmailTaken(ctx, *account.Email); taken || err != nil {
+		return "", err
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*account.Password), 10)

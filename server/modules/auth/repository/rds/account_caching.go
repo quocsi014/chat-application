@@ -25,7 +25,6 @@ func (ac *AccountCaching)StoreAccount(ctx context.Context, account entity.Accoun
 	key := "account:" + *account.Email
 	err := ac.rdb.HSet(ctx, key, map[string]interface{}{
 		"email": *account.Email,
-		"username": *account.Username,
 		"password": *account.Password,
 	}).Err()
 	return err
@@ -39,5 +38,5 @@ func (ac *AccountCaching)GetAccount(ctx context.Context, email string) (*entity.
 	}
 	mapData := ac.rdb.HGetAll(ctx, key)
 	vals := mapData.Val()
-	return entity.NewAccount(vals["email"], vals["username"], vals["password"]), nil
+	return entity.NewAccount(vals["email"], vals["password"]), nil
 }

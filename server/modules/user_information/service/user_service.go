@@ -13,6 +13,7 @@ import (
 type IUserRepository interface{
 	InsertUser(ctx context.Context, user *entity.User) error
 	FindUserById(ctx context.Context, id string) (*entity.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*entity.User, error)
 	UpdateUser(ctx context.Context, user *entity.User) error
 }
 type UserService struct{
@@ -26,35 +27,53 @@ func NewUserService(repository IUserRepository) *UserService{
 }
 
 var validNameRegex = regexp.MustCompile(`^[\p{L}\p{M}\p{Zs}'\-\.]+$`)
-func (service *UserService)CreateUser(ctx context.Context, user *entity.User) error{
-	if _, err := service.repository.FindUserById(ctx, user.Id); err == nil{		
+
+func (service *UserService) CreateUser(ctx context.Context, user *entity.User) error {
+	if _, err := service.repository.FindUserById(ctx, user.Id); err == nil {		
 		return entity.ErrExistUser
-	}else{
-		if !errors.Is(err, app_error.ErrRecordNotFound){
-			return app_error.ErrDatabase(err)
-		}
+	} else if !errors.Is(err, app_error.ErrRecordNotFound) {
+		return app_error.ErrDatabase(err)
 	}
-	if user.Firstname == nil{
+
+	if user.Username == nil {
+		return entity.ErrBlankUsername
+	}
+	if len(*user.Username) < 3 {
+		return entity.ErrUsernameTooShort
+	}
+	if !isValidUsername(*user.Username) {
+		return entity.ErrInvalidUsername
+	}
+
+	// Kiểm tra xem username đã tồn tại chưa
+	if _, err := service.repository.GetUserByUsername(ctx, *user.Username); err == nil {
+		return entity.ErrUsernameTaken
+	} else if !errors.Is(err, app_error.ErrRecordNotFound) {
+		return app_error.ErrDatabase(err)
+	}
+
+	// Kiểm tra các trường khác như cũ
+	if user.Firstname == nil {
 		return entity.ErrFirstNameMissing
 	}
-	if user.Lastname == nil{
+	if user.Lastname == nil {
 		return entity.ErrLastnameMissing
 	}
-	if *user.Firstname == ""{
+	if *user.Firstname == "" {
 		return entity.ErrBlankFirstname
 	}
-	if *user.Lastname == ""{
+	if *user.Lastname == "" {
 		return entity.ErrBlankLastname
 	}
-	if !validNameRegex.MatchString(*user.Firstname){
+	if !validNameRegex.MatchString(*user.Firstname) {
 		return entity.ErrInvalidFirstname
 	}
-	if !validNameRegex.MatchString(*user.Lastname){
+	if !validNameRegex.MatchString(*user.Lastname) {
 		return entity.ErrInvalidLastname
 	}
 
 	err := service.repository.InsertUser(ctx, user)
-	if err != nil{
+	if err != nil {
 		return app_error.ErrDatabase(err)
 	}
 	return nil
@@ -69,6 +88,26 @@ func (service *UserService) UpdateUser(ctx context.Context, userId string, user 
 		return app_error.ErrDatabase(err)
 	}
 
+	if user.Username != nil {
+		if *user.Username == "" {
+			return entity.ErrBlankUsername
+		}
+		if len(*user.Username) < 3 {
+			return entity.ErrUsernameTooShort
+		}
+		if !isValidUsername(*user.Username) {
+			return entity.ErrInvalidUsername
+		}
+		// Kiểm tra xem username mới có bị trùng không
+		if *existingUser.Username != *user.Username {
+			if _, err := service.repository.GetUserByUsername(ctx, *user.Username); err == nil {
+				return entity.ErrUsernameTaken
+			} else if !errors.Is(err, app_error.ErrRecordNotFound) {
+				return app_error.ErrDatabase(err)
+			}
+		}
+	}
+
 	if user.Firstname != nil {
 		if *user.Firstname == "" {
 			return entity.ErrBlankFirstname
@@ -76,7 +115,6 @@ func (service *UserService) UpdateUser(ctx context.Context, userId string, user 
 		if !validNameRegex.MatchString(*user.Firstname) {
 			return entity.ErrInvalidFirstname
 		}
-		existingUser.Firstname = user.Firstname
 	}
 
 	if user.Lastname != nil {
@@ -86,16 +124,18 @@ func (service *UserService) UpdateUser(ctx context.Context, userId string, user 
 		if !validNameRegex.MatchString(*user.Lastname) {
 			return entity.ErrInvalidLastname
 		}
-		existingUser.Lastname = user.Lastname
 	}
 
-	if user.AvatarURL != nil {
-		existingUser.AvatarURL = user.AvatarURL
-	}
-
-	err = service.repository.UpdateUser(ctx, existingUser)
+	// Cập nhật user
+	err = service.repository.UpdateUser(ctx, user)
 	if err != nil {
 		return app_error.ErrDatabase(err)
 	}
 	return nil
+}
+
+// Hàm kiểm tra tính hợp lệ của username
+func isValidUsername(username string) bool {
+	validUsernameRegex := regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+	return validUsernameRegex.MatchString(username)
 }

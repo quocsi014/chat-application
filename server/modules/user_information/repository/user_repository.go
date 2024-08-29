@@ -38,3 +38,14 @@ func (repo *UserRepository)FindUserById(ctx context.Context, id string) (*entity
 func (repo *UserRepository) UpdateUser(ctx context.Context, user *entity.User) error {
 	return repo.db.Model(&entity.User{}).Where("id = ?", user.Id).Updates(user).Error
 }
+
+func (repo *UserRepository) GetUserByUsername(ctx context.Context, username string) (*entity.User, error) {
+	user := entity.User{}
+	if err := repo.db.Where("username = ?", username).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, app_error.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return &user, nil
+}
