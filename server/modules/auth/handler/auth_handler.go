@@ -156,5 +156,5 @@ func (handler *AuthHandler)VerifyRegistration() func(ctx *gin.Context){
 func(handler *AuthHandler)SetupRoute(group *gin.RouterGroup){
 	group.POST("/login", handler.Login())
 	group.POST("/register", handler.Register())
-	group.POST("register/verify", middleware.VerifyToken(), handler.VerifyRegistration())
+	group.POST("/verify", middleware.VerifyToken(), handler.VerifyRegistration())
 }

@@ -30,21 +30,21 @@ var (
 
 	ErrEmailExist = app_error.ErrConflictData(errors.New("Email already exist"), "EMAIL_EXIST", "Email have been taken")
 
-	ErrInvaliEmail = app_error.ErrInvalidData(errors.New("Invalid email"), "This is not an email")
+	ErrInvaliEmail = app_error.ErrInvalidData(errors.New("Invalid email"), "INVALID_EMAIL", "This is not an email")
 
-	ErrNilEmail = app_error.ErrInvalidData(errors.New("Missing email"), "Email is required")
+	ErrNilEmail = app_error.ErrInvalidData(errors.New("Missing email"), "EMAIL_MISSING", "Email is required")
 
-	ErrBlankUsername = app_error.ErrInvalidData(errors.New("Username is blank"), "Username can not be blank")
+	ErrBlankUsername = app_error.ErrInvalidData(errors.New("Username is blank"), "BLANK_USERNAME", "Username can not be blank")
 
-	ErrInvalidUsername = app_error.ErrInvalidData(errors.New("Invalid username"), "Username must have at least 5 characters")
+	ErrInvalidUsername = app_error.ErrInvalidData(errors.New("Invalid username"), "INVALID_USERNAME", "Username must have at least 5 characters")
 
-	ErrNilUsername = app_error.ErrInvalidData(errors.New("Missing username"), "Username is required")
+	ErrNilUsername = app_error.ErrInvalidData(errors.New("Missing username"), "USERNAME_MISSING", "Username is required")
 
-	ErrBlankPassword = app_error.ErrInvalidData(errors.New("Password blank"), "Password can not be blank")
+	ErrBlankPassword = app_error.ErrInvalidData(errors.New("Password blank"), "BLANK_PASSWORD", "Password can not be blank")
 
-	ErrInvalidPassword = app_error.ErrInvalidData(errors.New("Invalid password"), "Password must have at least 6 characters")
+	ErrInvalidPassword = app_error.ErrInvalidData(errors.New("Invalid password"), "INVALID_PASSWORD", "Password must have at least 6 characters")
 
-	ErrNilPassword = app_error.ErrInvalidData(errors.New("Missing Password"), "Password is required")
+	ErrNilPassword = app_error.ErrInvalidData(errors.New("Missing Password"), "PASSWOR_MISSING", "Password is required")
 )
 
 type LoginAccount struct{

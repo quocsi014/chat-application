@@ -63,7 +63,7 @@ func (as *AuthService) Login(ctx context.Context, account entity.LoginAccount) (
 	}
 
 	if account.Account == nil{
-		return "", app_error.ErrInvalidData(errors.New("Missing account"), "Email or username is required")
+		return "", app_error.ErrInvalidData(errors.New("Missing account"), "ACCOUNT_MISSING", "Email or username is required")
 	}
 
 	a, err := as.repository.GetAccount(ctx, *account.Account)

@@ -10,16 +10,18 @@ type User struct{
 	Id string `json:"id,omitempty" gorm:"column:id"`
 	Firstname *string `json:"firstname,omitempty" gorm:"column:firstname"`
 	Lastname *string `json:"lastname,omitempty" gorm:"column:lastname"`
+	AvatarURL *string `json:"avatar_url,omitempty" gorm:"column:avatar_url"`
 }
 
 func (u *User)TableName() string{
 	return "users"
 }
 
-func NewUser(firstname, lastname string) *User{
+func NewUser(firstname, lastname, avatar_url string ) *User{
 	return &User{
 		Firstname: &firstname,
 		Lastname: &lastname,
+		AvatarURL: &avatar_url,
 	}
 }
 
@@ -38,4 +40,6 @@ var(
 	ErrLastnameMissing = app_error.ErrInvalidData(errors.New("Lastname missing"), "LASTNAME_MISSING", "Lastname is required")
 
 	ErrExistUser = app_error.ErrConflictData(errors.New("User has been initialized"), "INITIALIZED", "A user for this account has been previously created.")
+
+	ErrUserNotFound = app_error.ErrNotFound(errors.New("User not found"), "USER_NOT_FOUND", "The user does not exist")
 )

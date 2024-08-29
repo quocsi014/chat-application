@@ -13,6 +13,7 @@ import (
 type IUserRepository interface{
 	InsertUser(ctx context.Context, user *entity.User) error
 	FindUserById(ctx context.Context, id string) (*entity.User, error)
+	UpdateUser(ctx context.Context, user *entity.User) error
 }
 type UserService struct{
 	repository IUserRepository
@@ -54,6 +55,46 @@ func (service *UserService)CreateUser(ctx context.Context, user *entity.User) er
 
 	err := service.repository.InsertUser(ctx, user)
 	if err != nil{
+		return app_error.ErrDatabase(err)
+	}
+	return nil
+}
+
+func (service *UserService) UpdateUser(ctx context.Context, userId string, user *entity.User) error {
+	existingUser, err := service.repository.FindUserById(ctx, userId)
+	if err != nil {
+		if errors.Is(err, app_error.ErrRecordNotFound) {
+			return entity.ErrUserNotFound
+		}
+		return app_error.ErrDatabase(err)
+	}
+
+	if user.Firstname != nil {
+		if *user.Firstname == "" {
+			return entity.ErrBlankFirstname
+		}
+		if !validNameRegex.MatchString(*user.Firstname) {
+			return entity.ErrInvalidFirstname
+		}
+		existingUser.Firstname = user.Firstname
+	}
+
+	if user.Lastname != nil {
+		if *user.Lastname == "" {
+			return entity.ErrBlankLastname
+		}
+		if !validNameRegex.MatchString(*user.Lastname) {
+			return entity.ErrInvalidLastname
+		}
+		existingUser.Lastname = user.Lastname
+	}
+
+	if user.AvatarURL != nil {
+		existingUser.AvatarURL = user.AvatarURL
+	}
+
+	err = service.repository.UpdateUser(ctx, existingUser)
+	if err != nil {
 		return app_error.ErrDatabase(err)
 	}
 	return nil

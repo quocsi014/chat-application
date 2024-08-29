@@ -34,3 +34,7 @@ func (repo *UserRepository)FindUserById(ctx context.Context, id string) (*entity
 	}
 	return &user, nil
 }
+
+func (repo *UserRepository) UpdateUser(ctx context.Context, user *entity.User) error {
+	return repo.db.Model(&entity.User{}).Where("id = ?", user.Id).Updates(user).Error
+}

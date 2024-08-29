@@ -59,7 +59,7 @@ func (ms *EmailService)SendRegistrationVerification(receiver, token string) erro
 		<p>You have just registered the application, please press the button below to verify your email.</p>
 		<p>if it is not you please ignore this email.</p>
 		<p>(Valid for 5 minutes)</p>
-		<a href="%s%s" style="
+		<a href="%s?token=%s" style="
 			display: inline-block;
 			padding: 10px 20px;
 			font-size: 16px;
