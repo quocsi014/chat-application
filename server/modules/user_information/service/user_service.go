@@ -139,3 +139,14 @@ func isValidUsername(username string) bool {
 	validUsernameRegex := regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 	return validUsernameRegex.MatchString(username)
 }
+
+func (service *UserService) GetUserByUsername(ctx context.Context, username string) (*entity.User, error) {
+	user, err := service.repository.GetUserByUsername(ctx, username)
+	if err != nil {
+		if errors.Is(err, app_error.ErrRecordNotFound) {
+			return nil, entity.ErrUserNotFound
+		}
+		return nil, app_error.ErrDatabase(err)
+	}
+	return user, nil
+}
