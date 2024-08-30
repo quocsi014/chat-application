@@ -10,10 +10,9 @@ export const API_Login = (account, password) => {
   return axios.post(`${API_URL}/auth/login`, data);
 };
 
-export const API_Register = (email, username, password) => {
+export const API_Register = (email, password) => {
   let data = {
     email: email,
-    username: username,
     password: password,
   };
   return axios.post(`${API_URL}/auth/register`, data);

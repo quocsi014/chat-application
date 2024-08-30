@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TextField from "../components/TextField";
 import LoadingButton from "../components/LoadingButton";
 import defaultAvatar from "../assets/default_avatar.png";
@@ -7,6 +7,7 @@ import axios from "axios";
 import { createUser } from "../api/userAPI";
 import { getCookie } from "../utils/cookie";
 import { useNavigate } from "react-router-dom";
+
 function OnBoarding() {
   const [firstname, setFirstname] = useState("");
   const [firstnameErrorMessage, setFirstnameErrorMessage] = useState("");
@@ -14,10 +15,25 @@ function OnBoarding() {
   const [lastnameErrorMessage, setLastnameErrorMessage] = useState("");
   const [avatar, setAvatar] = useState(null);
   const [preview, setPreview] = useState(defaultAvatar);
-  const [formErrorMessage, setFormErrorMessage] = useState("")
   const [isCreating, setIsCreating] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameErrorMessage, setUsernameErrorMessage] = useState("");
 
-  const navigate = useNavigate()
+  const dialogRef = useRef(null)
+  const closeDialogButtonRef = useRef(null)
+
+  const showDialog = (doAfterClose)=>{
+    dialogRef.current.showModal()
+    closeDialogButtonRef.current.addEventListener('click', ()=>{
+      dialogRef.current.close()
+      if(doAfterClose){
+        doAfterClose()
+      }
+    })
+  }
+
+  const navigate = useNavigate();
   const token = getCookie("access_token");
 
   useEffect(() => {
@@ -36,32 +52,37 @@ function OnBoarding() {
     }
   };
 
-  const CLOUDINARY_API_SECRET = import.meta.env.REACT_APP_CLOUDINARY_API_SECRET;
-
   function CallCreateUserAPI(avatar_url) {
-    createUser(firstname, lastname, avatar_url, token)
+    createUser(firstname, lastname, username, avatar_url, token)
       .then((res) => {
-        navigate("/")
+        navigate("/");
       })
       .catch((err) => {
-        if (err.response.data.key == "INITIALIZED"){
-          alert(err.response.data.message + "\nYou will be redirected to the app.")
-          navigate("/")
-          return
+        if (err.response.data.key == "INITIALIZED") {
+          setDialogMessage(err.response.data.message + "\nYou will be redirected to the app.")
+          showDialog(()=>{navigate("/")})
+          return;
         }
-        if(err.response.data.key == "INVALID_FIRSTNAME"){
-          setFirstnameErrorMessage(err.response.data.message)
-          return
+        if (err.response.data.key == "INVALID_FIRSTNAME") {
+          setFirstnameErrorMessage(err.response.data.message);
+          return;
         }
-        if(err.response.data.key == "INVALID_LASTNAME"){
-          setLastnameErrorMessage(err.response.data.message)
-          return
+        if (err.response.data.key == "INVALID_LASTNAME") {
+          setLastnameErrorMessage(err.response.data.message);
+          return;
         }
-
+        if (err.response.data.key == "INVALID_USERNAME") {
+          setUsernameErrorMessage(err.response.data.message);
+          return;
+        }
+        if (err.response.data.key == "USERNAME_TAKEN") {
+          setUsernameErrorMessage(err.response.data.message);
+          return;
+        }
       })
-      .finally(()=>{
-        setIsCreating(false)
-      })
+      .finally(() => {
+        setIsCreating(false);
+      });
   }
 
   const handleCreateInformation = () => {
@@ -79,10 +100,12 @@ function OnBoarding() {
           formData
         )
         .then((response) => {
-          CallCreateUserAPI(response.data.secure_url)
+          CallCreateUserAPI(response.data.secure_url);
         })
         .catch((err) => {
-          alert("Fail to upload avatar, pls come back later or you can create without avatar")
+          alert(
+            "Fail to upload avatar, pls come back later or you can create without avatar"
+          );
         })
         .finally(() => {
           setIsCreating(false);
@@ -117,6 +140,15 @@ function OnBoarding() {
           />
         </div>
         <TextField
+          title="Username"
+          value={username}
+          setValue={setUsername}
+          errorMessage={usernameErrorMessage}
+          setErrorMessage={setUsernameErrorMessage}
+          type="text"
+          id="username"
+        />
+        <TextField
           title="Firstname"
           value={firstname}
           setValue={setFirstname}
@@ -150,6 +182,11 @@ function OnBoarding() {
           />
         )}
       </div>
+      <dialog ref={dialogRef} className="bg-white rounded-lg z-50 p-5" id="myDialog">
+        <h2>Error</h2>
+        <p>{dialogMessage}</p>
+        <button ref={closeDialogButtonRef} className="outline-none bg-gray-300 p-2">Close</button>
+      </dialog>
     </div>
   );
 }

@@ -4,13 +4,12 @@ import TextField from "../components/TextField"
 import { Link } from "react-router-dom"
 import { API_Register } from "../api/authAPI"
 import LoadingButton from "../components/LoadingButton"
+import { useMemo } from "react"
 
 function Register(){
 
   const [email, setEmail] = useState("")
   const [emailErrorMessage, setEmailErrorMessage] = useState("")
-  const [username, setUsername] = useState("")
-  const [usernameErrorMessage, setUsernameErrorMessage] = useState("")
   const [password, setPassword] = useState("")
   const [passwordErrorMessage, setPasswordErrorMessage] = useState("")
   const [confirm, setConfirm] = useState("")
@@ -25,24 +24,18 @@ function Register(){
       return
     }
 
-    API_Register(email, username, password)
+    API_Register(email, password)
     .then(result =>{
       console.log(result)
     })
     .catch(error =>{
       console.log(error)
       let responseData = error.response.data
-      if(responseData.key == "USERNAME_EXIST"){
-        setUsernameErrorMessage(responseData.message)
-      }
       if(responseData.key == "EMAIL_EXIST"){
         setEmailErrorMessage(responseData.message)
       }
       if(responseData.key == "INVALID_EMAIL"){
         setEmailErrorMessage(responseData.message)
-      }
-      if(responseData.key == "INVALID_USERNAME"){
-        setUsernameErrorMessage(responseData.message)
       }
       if(responseData.key == "INVALID_PASSWORD"){
         setPasswordErrorMessage(responseData.message)
@@ -58,6 +51,11 @@ function Register(){
   useEffect(()=>{
     document.title = "Register - Chat"
   }, [])
+
+  const isFormValid = useMemo(() => {
+    return email !== "" && password !== "" && confirm !== "";
+  }, [email, password, confirm]);
+
   return(
     <div className="flex h-screen w-screen justify-center bg-bg">
       <div className="mt-16 px-10 py-14 w-fit h-fit flex flex-col items-center rounded-2xl bg-white shadow-xl">
@@ -70,15 +68,6 @@ function Register(){
           setValue={setEmail}
           errorMessage={emailErrorMessage}
           setErrorMessage={setEmailErrorMessage}
-          id="email"
-        />
-        <TextField
-          title="Username"
-          type="text"
-          value={username}
-          setValue={setUsername}
-          errorMessage={usernameErrorMessage}
-          setErrorMessage={setUsernameErrorMessage}
           id="email"
         />
         <TextField
@@ -105,18 +94,18 @@ function Register(){
               login
             </Link>
           </span>
-        {email != "" && username != "" && password != "" && confirm != "" ? (
-          <LoadingButton
-          value="Register"
-          handleFunction={handleRegister}
-          disabled={false}
-          isLoading={isRegistering}
-        />
-        ) : (
+        {isFormValid ? (
           <LoadingButton
             value="Register"
             handleFunction={handleRegister}
             disabled={false}
+            isLoading={isRegistering}
+          />
+        ) : (
+          <LoadingButton
+            value="Register"
+            handleFunction={handleRegister}
+            disabled={true}
             isLoading={isRegistering}
           />
         )}

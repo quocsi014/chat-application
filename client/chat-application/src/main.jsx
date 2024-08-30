@@ -5,7 +5,7 @@ import "./index.css"
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Register from './pages/Register.jsx'
 import Verification from './pages/Verification.jsx'
-import Onboarding from './pages/Onboarding.jsx'
+import OnBoarding from './pages/Onboarding.jsx'
 import ErrPage from './pages/ErrPage.jsx'
 import Login from './pages/Login.jsx'
 
@@ -25,7 +25,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/onboarding",
-    element: <Onboarding/>
+    element: <OnBoarding/>
   },
   {
     path:"/login",
