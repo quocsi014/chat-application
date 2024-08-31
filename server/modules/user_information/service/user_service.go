@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 
+	"github.com/quocsi014/common"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/user_information/entity"
 )
@@ -15,6 +17,7 @@ type IUserRepository interface{
 	FindUserById(ctx context.Context, id string) (*entity.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*entity.User, error)
 	UpdateUser(ctx context.Context, user *entity.User) error
+	GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]*entity.User, error)
 }
 type UserService struct{
 	repository IUserRepository
@@ -149,4 +152,24 @@ func (service *UserService) GetUserByUsername(ctx context.Context, username stri
 		return nil, app_error.ErrDatabase(err)
 	}
 	return user, nil
+}
+
+func (service *UserService) GetUserById(ctx context.Context, userId string) (*entity.User, error) {
+	user, err := service.repository.FindUserById(ctx, userId)
+	if err != nil {
+		if errors.Is(err, app_error.ErrRecordNotFound) {
+			return nil, entity.ErrUserNotFound
+		}
+		return nil, app_error.ErrDatabase(err)
+	}
+	return user, nil
+}
+
+func (service *UserService) GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]*entity.User, error) {
+	users, err := service.repository.GetUsersByUsername(ctx, username, paging)
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+		return nil, app_error.ErrDatabase(err)
+	}
+	return users, nil
 }
