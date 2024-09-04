@@ -133,7 +133,6 @@ func (handler *UserHandler) GetUserProfiles() func(ctx *gin.Context) {
 			ctx.JSON(errResponse.Code, errResponse.Err)
 			return
 		}
-
 		ctx.JSON(http.StatusOK, gin.H{
 			"users": users,
 			"paging": paging,

@@ -67,7 +67,17 @@ func ErrConflictData(rootError error, key string, message string) *AppError{
 		Key: key,
 	}
 }
-var ErrRecordNotFound error = errors.New("Record Not Found")
+
+func ErrPermissionDenied() *AppError{
+	return &AppError{
+		StatusCode: http.StatusForbidden,
+		RootError: errors.New("permission denied"),
+		Message: "Yor are not allowed",
+		Key: "NOT_ALLOWED",
+	}
+}
+
+var ErrRecordNotFound error = errors.New("record rot round")
 
 type ErrorResponse struct{
 	Code int

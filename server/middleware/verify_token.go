@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/quocsi014/common/app_error"
+	"github.com/quocsi014/helper"
 )
 
 
@@ -43,6 +44,27 @@ func VerifyToken() func(ctx *gin.Context){
     			return
 		}
 		ctx.Set("token", token)
+		ctx.Next()
+	}
+}
+
+func VerifyUser() func(*gin.Context){
+	return func(ctx *gin.Context){
+		token, ok := ctx.Get("token")
+		if !ok {
+			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "Token is required"))
+			return
+		}
+
+		jwtMapClaims,err := helper.GetMapClaims(token.(*jwt.Token))
+		if err != nil{
+			ctx.JSON(http.StatusUnauthorized, err)
+		}
+		tokenUserId := jwtMapClaims["user_id"].(string)	
+		user_id := ctx.Query("user_id")
+		if tokenUserId != user_id{
+			ctx.JSON(http.StatusForbidden, app_error.ErrPermissionDenied())
+		}
 		ctx.Next()
 	}
 }

@@ -15,6 +15,9 @@ import (
 	auth_repository "github.com/quocsi014/modules/auth/repository"
 	"github.com/quocsi014/modules/auth/repository/rds"
 	auth_service "github.com/quocsi014/modules/auth/service"
+	conversation_handler "github.com/quocsi014/modules/conversation/handler"
+	conversation_repository "github.com/quocsi014/modules/conversation/repository"
+	conversation_service "github.com/quocsi014/modules/conversation/service"
 	"github.com/quocsi014/modules/user_information/handler"
 	"github.com/quocsi014/modules/user_information/repository"
 	"github.com/quocsi014/modules/user_information/service"
@@ -45,12 +48,12 @@ func main() {
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-        	AllowAllOrigins:  true,
-        	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-        	AllowHeaders:     []string{"Authorization", "Content-Type"},
-        	ExposeHeaders:    []string{"Content-Length"},
-        	AllowCredentials: false, // Phải đặt thành false khi AllowAllOrigins là true
-    	}))
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Authorization", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false, // Phải đặt thành false khi AllowAllOrigins là true
+	}))
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "pong",
@@ -71,11 +74,17 @@ func main() {
 		}
 
 		userGroup := v1Group.Group("users")
+		userRepo := repository.NewUserRepository(db)
+		userService := service.NewUserService(userRepo)
+		userHandler := handler.NewUserHandler(userService)
+		userHandler.SetupRoute(userGroup)
+
+		conversationGroup := v1Group.Group("/conversations")
 		{
-			userRepo := repository.NewUserRepository(db)
-			userService := service.NewUserService(userRepo)
-			userHandler := handler.NewUserHandler(userService)
-			userHandler.SetupRoute(userGroup)
+			conversationRepo := conversation_repository.NewConversationRepository(db)
+			conversationService := conversation_service.NewConversationService(conversationRepo, userService)
+			conversationHandler := conversation_handler.NewConversationHandler(conversationService)
+			conversationHandler.SetupRoute(conversationGroup)
 		}
 	}
 	r.Run()
