@@ -13,6 +13,7 @@ import (
 
 type IConversationRequestService interface {
 	CreateConversationRequest(ctx context.Context, senderId, recipientId string) error
+	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) error
 }
 
 type ConversationRequestHandler struct {
@@ -23,10 +24,6 @@ func NewConversationHandler(service IConversationRequestService) *ConversationRe
 	return &ConversationRequestHandler{
 		service: service,
 	}
-}
-
-func (crh *ConversationRequestHandler) SetupRoute(group *gin.RouterGroup) {
-	group.POST("/requests/sent/:recipient_id", middleware.VerifyToken(), crh.CreateConversationRequest)
 }
 
 func (crh *ConversationRequestHandler) CreateConversationRequest(c *gin.Context) {
@@ -61,3 +58,43 @@ func (crh *ConversationRequestHandler) CreateConversationRequest(c *gin.Context)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Conversation request sent successfully"})
 }
+
+func (crh *ConversationRequestHandler)AcceptConversationRequest() func(ctx *gin.Context){
+	return func(ctx *gin.Context) {
+		
+		token, exists := ctx.Get("token")
+		if !exists {
+			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "Token không tồn tại"))
+			return
+		}
+	
+		claims, err := helper.GetMapClaims(token.(*jwt.Token))
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(err, "Unauthorized"))
+			return
+		}
+
+		recipientId, ok := claims["user_id"].(string)
+		if !ok {
+			ctx.JSON(http.StatusUnauthorized, app_error.ErrUnauthenticatedError(nil, "Invalid token"))
+			return
+		}
+
+		senderId := ctx.Param("sender_id")
+
+		if err := crh.service.AcceptConversationRequest(ctx, senderId, recipientId); err != nil{
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, err)
+			return
+		}
+
+		ctx.Status(http.StatusOK)
+	}
+}
+
+func (crh *ConversationRequestHandler) SetupRoute(group *gin.RouterGroup) {
+	group.POST("/requests/sent/:recipient_id", middleware.VerifyToken(), crh.CreateConversationRequest)
+	group.POST("/requests/received/:sender_id", middleware.VerifyToken(), crh.AcceptConversationRequest())
+}
+
+

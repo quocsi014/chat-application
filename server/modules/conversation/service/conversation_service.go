@@ -11,6 +11,7 @@ import (
 
 type IConversationRepository interface {
 	CreateConversationRequest(ctx context.Context, req *conversationEntity.ConversationRequest) error
+	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) error
 }
 
 type IUserService interface {
@@ -50,5 +51,16 @@ func (s *ConversationService) CreateConversationRequest(ctx context.Context, sen
 		return app_error.ErrInternal(err)
 	}
 
+	return nil
+}
+
+func (s *ConversationService) AcceptConversationRequest(ctx context.Context, senderId, recipientId string) error{
+	err := s.repo.AcceptConversationRequest(ctx, senderId, recipientId)
+	if err != nil{
+		if errors.Is(err, app_error.ErrRecordNotFound){
+			return app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST",	"no conversation requests found")
+		}
+		return app_error.ErrDatabase(err)
+	}
 	return nil
 }

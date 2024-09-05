@@ -45,9 +45,21 @@ func (cr *ConversationRequest)TableName() string{
 	return "conversation_requests"
 }
 
+var (
+	now = time.Now()
+)
+
 func NewConversationRequest(senderId, recipientId string) *ConversationRequest {
 	return &ConversationRequest{
 		SenderId:      senderId,
 		RecipientId:   recipientId,
+		RequestedTime: &now,
+	}
+}
+
+func NewAcceptedConversationRequest() *ConversationRequest{
+	return &ConversationRequest{
+		Status:"ACCEPTED",
+		AcceptedTime: &now,
 	}
 }
