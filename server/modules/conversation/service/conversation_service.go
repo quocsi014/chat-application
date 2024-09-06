@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 
-	conversationEntity "github.com/quocsi014/modules/conversation/entity"
 	"github.com/quocsi014/common/app_error"
+	"github.com/quocsi014/modules/conversation/entity"
+	conversationEntity "github.com/quocsi014/modules/conversation/entity"
 	userEntity "github.com/quocsi014/modules/user_information/entity"
 )
 
 type IConversationRepository interface {
 	CreateConversationRequest(ctx context.Context, req *conversationEntity.ConversationRequest) error
-	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) error
+	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error)
 }
 
 type IUserService interface {
@@ -54,13 +55,13 @@ func (s *ConversationService) CreateConversationRequest(ctx context.Context, sen
 	return nil
 }
 
-func (s *ConversationService) AcceptConversationRequest(ctx context.Context, senderId, recipientId string) error{
-	err := s.repo.AcceptConversationRequest(ctx, senderId, recipientId)
+func (s *ConversationService) AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error){
+	conversation, err := s.repo.AcceptConversationRequest(ctx, senderId, recipientId)
 	if err != nil{
 		if errors.Is(err, app_error.ErrRecordNotFound){
-			return app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST",	"no conversation requests found")
+			return nil, app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST",	"no conversation requests found")
 		}
-		return app_error.ErrDatabase(err)
-	}
-	return nil
+		return nil, app_error.ErrDatabase(err)
+	}	
+	return conversation, nil
 }

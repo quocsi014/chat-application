@@ -7,14 +7,14 @@ import (
 type Conversation struct{
 	Id string `json:"id" gorm:"column:id"`
 	IsGroup bool `json:"is_group" gorm:"column:id"`
-	CreatedAt time.Time `json:"created_at" gorm:"column:created_at"`
+	CreatedAt *time.Time `json:"created_at" gorm:"column:created_at"`
 }
 
-func NewConversation(id string, isGroup bool, createdAt time.Time) *Conversation{
+func NewConversation(id string, isGroup bool) *Conversation{
 	return &Conversation{
 		Id: id,
 		IsGroup: isGroup,
-		CreatedAt: createdAt,
+		CreatedAt: &now,
 	}
 }
 
@@ -61,5 +61,25 @@ func NewAcceptedConversationRequest() *ConversationRequest{
 	return &ConversationRequest{
 		Status:"ACCEPTED",
 		AcceptedTime: &now,
+	}
+}
+
+type ConversationMembership struct{
+	ConversationId string `json:"conversation_id" gorm:"column:conversation_id"`
+	UserId string `json:"user_id" gorm:"column:user_id"`
+	Role string `json:"role" gorm:"column:role"`
+	JoinedTime *time.Time `json:"joined_time" gorm:"columnjoined_time"`
+}
+
+func (cm *ConversationMembership)TableName() string {
+	return "conversation_memberships"
+}
+
+func NewConversationMembershipMemberRole(conversationId, userId string) *ConversationMembership{
+	return &ConversationMembership{
+		ConversationId: conversationId,
+		UserId: userId,
+		Role: "MEMBER",
+		JoinedTime: &now,
 	}
 }

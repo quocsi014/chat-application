@@ -9,11 +9,12 @@ import (
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/helper"
 	"github.com/quocsi014/middleware"
+	"github.com/quocsi014/modules/conversation/entity"
 )
 
 type IConversationRequestService interface {
 	CreateConversationRequest(ctx context.Context, senderId, recipientId string) error
-	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) error
+	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error)
 }
 
 type ConversationRequestHandler struct {
@@ -82,12 +83,13 @@ func (crh *ConversationRequestHandler)AcceptConversationRequest() func(ctx *gin.
 
 		senderId := ctx.Param("sender_id")
 
-		if err := crh.service.AcceptConversationRequest(ctx, senderId, recipientId); err != nil{
+		conversation, err := crh.service.AcceptConversationRequest(ctx, senderId, recipientId)
+		if err != nil{
 			errResponse := app_error.NewErrorResponseWithAppError(err)
 			ctx.JSON(errResponse.Code, err)
 			return
 		}
-
+		ctx.Header("Location", "/" + conversation.Id)
 		ctx.Status(http.StatusOK)
 	}
 }
