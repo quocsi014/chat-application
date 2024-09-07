@@ -16,6 +16,7 @@ type IConversationRequestService interface {
 	CreateConversationRequest(ctx context.Context, senderId, recipientId string) error
 	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error)
 	DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error
+	GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error)
 }
 
 type ConversationRequestHandler struct {
@@ -128,11 +129,30 @@ func (crh *ConversationRequestHandler)DeleteConversationRequest() func(*gin.Cont
 		ctx.Status(http.StatusOK)
 	}
 }
+
+func (crh *ConversationRequestHandler) GetConversationRequestSent() func (*gin.Context){
+	return func(ctx *gin.Context){
+		senderId := helper.GetUserId(ctx)
+		if senderId == ""{
+			return
+		}
+		conversationReqs, err := crh.service.GetConversationRequestSent(ctx, senderId)
+		if err != nil{
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, err)
+			return
+		}
+		ctx.JSON(http.StatusOK, conversationReqs)
+	}
+}
+
+
 func (crh *ConversationRequestHandler) SetupRoute(group *gin.RouterGroup) {
 	group.POST("/requests/sent/:recipient_id", middleware.VerifyToken(), crh.CreateConversationRequest)
 	group.POST("/requests/received/:sender_id/accept", middleware.VerifyToken(), crh.AcceptConversationRequest())
 	group.POST("/requests/received/:sender_id/reject", middleware.VerifyToken(), crh.RejectConversationRequest())
 	group.DELETE("/requests/sent/:recipient_id", middleware.VerifyToken(), crh.DeleteConversationRequest())
+	group.GET("requests/sent", middleware.VerifyToken(), crh.GetConversationRequestSent())
 }
 
 

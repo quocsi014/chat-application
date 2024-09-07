@@ -14,6 +14,7 @@ type IConversationRepository interface {
 	CreateConversationRequest(ctx context.Context, req *conversationEntity.ConversationRequest) error
 	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error)
 	DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error
+	GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error)
 }
 
 type IUserService interface {
@@ -77,3 +78,10 @@ func (s *ConversationService) DeleteConversationRequest(ctx context.Context, sen
 	return nil
 }
 
+func (s *ConversationService) GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error){
+	conversationReqs, err := s.repo.GetConversationRequestSent(ctx, senderId)
+	if err != nil {
+		return nil, app_error.ErrDatabase(err)
+	}
+	return conversationReqs, nil
+}

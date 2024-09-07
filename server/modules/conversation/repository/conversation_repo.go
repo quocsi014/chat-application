@@ -82,3 +82,13 @@ func (r *ConversationRepository)AcceptConversationRequest(ctx context.Context, s
 	tx.Commit()
 	return conversation, nil
 }
+
+func (r *ConversationRepository)GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error){
+	var conversationReqs []entity.ConversationRequestDetail
+
+	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("sender_id = ?", senderId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil{
+		return nil, err
+	}
+	return conversationReqs, nil
+}
+

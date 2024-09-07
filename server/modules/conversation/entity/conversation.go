@@ -2,6 +2,8 @@ package entity
 
 import (
 	"time"
+
+	"github.com/quocsi014/modules/user_information/entity"
 )
 
 type Conversation struct{
@@ -52,6 +54,15 @@ func NewConversationRequest(senderId, recipientId string) *ConversationRequest {
 		RecipientId:   recipientId,
 		RequestedTime: &now,
 	}
+}
+
+type ConversationRequestDetail struct {
+    ConversationRequest
+    Sender   entity.User `json:"sender" gorm:"foreignKey:SenderId"`
+    Recipient entity.User `json:"recipient" gorm:"foreignKey:RecipientId"`
+}
+func (crd *ConversationRequestDetail)TableName() string{
+	return "conversation_requests"
 }
 
 type ConversationMembership struct{
