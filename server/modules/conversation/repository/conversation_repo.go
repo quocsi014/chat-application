@@ -92,3 +92,12 @@ func (r *ConversationRepository)GetConversationRequestSent(ctx context.Context, 
 	return conversationReqs, nil
 }
 
+func (r *ConversationRepository)GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error){
+	var conversationReqs []entity.ConversationRequestDetail
+
+	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("recipient_id = ?", recipientId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil{
+		return nil, err
+	}
+	return conversationReqs, nil
+}
+
