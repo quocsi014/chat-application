@@ -11,6 +11,7 @@ type Conversation struct{
 }
 
 func NewConversation(id string, isGroup bool) *Conversation{
+	now := time.Now()
 	return &Conversation{
 		Id: id,
 		IsGroup: isGroup,
@@ -36,31 +37,20 @@ func (cd *ConversationDetail)TableName() string{
 type ConversationRequest struct{
 	SenderId string `json:"sender_id" gorm:"column:sender_id"`
 	RecipientId string `json:"recipient_id" gorm:"column:recipient_id"`
-	Status string `json:"status" gorm:"column:status"`
 	RequestedTime *time.Time `json:"requested_time" gorm:"column:requested_time"`
-	AcceptedTime *time.Time `json:"accepted_time" gorm:"column:accepted_time"`
 }
 
 func (cr *ConversationRequest)TableName() string{
 	return "conversation_requests"
 }
 
-var (
-	now = time.Now()
-)
 
 func NewConversationRequest(senderId, recipientId string) *ConversationRequest {
+	now := time.Now()
 	return &ConversationRequest{
 		SenderId:      senderId,
 		RecipientId:   recipientId,
 		RequestedTime: &now,
-	}
-}
-
-func NewAcceptedConversationRequest() *ConversationRequest{
-	return &ConversationRequest{
-		Status:"ACCEPTED",
-		AcceptedTime: &now,
 	}
 }
 
@@ -76,6 +66,7 @@ func (cm *ConversationMembership)TableName() string {
 }
 
 func NewConversationMembershipMemberRole(conversationId, userId string) *ConversationMembership{
+	now := time.Now()
 	return &ConversationMembership{
 		ConversationId: conversationId,
 		UserId: userId,

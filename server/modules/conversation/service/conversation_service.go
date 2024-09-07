@@ -13,6 +13,7 @@ import (
 type IConversationRepository interface {
 	CreateConversationRequest(ctx context.Context, req *conversationEntity.ConversationRequest) error
 	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error)
+	DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error
 }
 
 type IUserService interface {
@@ -46,7 +47,6 @@ func (s *ConversationService) CreateConversationRequest(ctx context.Context, sen
 	}
 
 	req := conversationEntity.NewConversationRequest(senderId, recipientId)
-	req.Status = "PENDING"
 
 	if err := s.repo.CreateConversationRequest(ctx, req); err != nil {
 		return app_error.ErrInternal(err)
@@ -59,9 +59,21 @@ func (s *ConversationService) AcceptConversationRequest(ctx context.Context, sen
 	conversation, err := s.repo.AcceptConversationRequest(ctx, senderId, recipientId)
 	if err != nil{
 		if errors.Is(err, app_error.ErrRecordNotFound){
-			return nil, app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST",	"no conversation requests found")
+			return nil, app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST", "no conversation requests found")
 		}
 		return nil, app_error.ErrDatabase(err)
 	}	
 	return conversation, nil
 }
+
+func (s *ConversationService) DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error{
+	err := s.repo.DeleteConversationRequest(ctx, senderId, recipientId)
+	if err != nil{
+		if errors.Is(err, app_error.ErrRecordNotFound){
+			return app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST", "no conversation requests found")
+		}
+		return app_error.ErrDatabase(err)
+	}
+	return nil
+}
+

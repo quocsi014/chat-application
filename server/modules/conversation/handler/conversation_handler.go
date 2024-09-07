@@ -15,6 +15,7 @@ import (
 type IConversationRequestService interface {
 	CreateConversationRequest(ctx context.Context, senderId, recipientId string) error
 	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error)
+	DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error
 }
 
 type ConversationRequestHandler struct {
@@ -94,9 +95,44 @@ func (crh *ConversationRequestHandler)AcceptConversationRequest() func(ctx *gin.
 	}
 }
 
+func (crh *ConversationRequestHandler)RejectConversationRequest() func(*gin.Context){
+	return func (ctx *gin.Context){
+		recipientId := helper.GetUserId(ctx)	
+		if recipientId == ""{
+			return
+		}
+		senderId := ctx.Param("sender_id")
+		err := crh.service.DeleteConversationRequest(ctx, senderId, recipientId)
+		if err != nil{
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, err)
+			return
+		}
+		ctx.Status(http.StatusOK)
+	}
+}
+
+func (crh *ConversationRequestHandler)DeleteConversationRequest() func(*gin.Context){
+	return func (ctx *gin.Context){
+		senderId := helper.GetUserId(ctx)	
+		if senderId == ""{
+			return
+		}
+		recipientId := ctx.Param("recipient_id")
+		err := crh.service.DeleteConversationRequest(ctx, senderId, recipientId)
+		if err != nil{
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, err)
+			return
+		}
+		ctx.Status(http.StatusOK)
+	}
+}
 func (crh *ConversationRequestHandler) SetupRoute(group *gin.RouterGroup) {
 	group.POST("/requests/sent/:recipient_id", middleware.VerifyToken(), crh.CreateConversationRequest)
-	group.POST("/requests/received/:sender_id", middleware.VerifyToken(), crh.AcceptConversationRequest())
+	group.POST("/requests/received/:sender_id/accept", middleware.VerifyToken(), crh.AcceptConversationRequest())
+	group.POST("/requests/received/:sender_id/reject", middleware.VerifyToken(), crh.RejectConversationRequest())
+	group.DELETE("/requests/sent/:recipient_id", middleware.VerifyToken(), crh.DeleteConversationRequest())
 }
 
 

@@ -26,23 +26,21 @@ func (r *ConversationRepository) CreateConversationRequest(ctx context.Context, 
 	return nil
 }
 
-func UpdateConversationRequest(ctx context.Context, db *gorm.DB, senderId, recipientId string) error {
-	acceptConversationRequest := entity.NewAcceptedConversationRequest()
-	result := db.Table(acceptConversationRequest.TableName()).Where("sender_id = ? and recipient_id = ?", senderId, recipientId).Updates(acceptConversationRequest)
-	if result.Error != nil{
-		return result.Error
-	}
-
+func DeleteConversationRequest(ctx context.Context, db *gorm.DB, senderId, recipientId string) error {
+	conversationRequest := entity.NewConversationRequest(senderId, recipientId)
+	result := db.Table(conversationRequest.TableName()).Where("sender_id = ? and recipient_id = ?", senderId, recipientId).Delete(conversationRequest)
 	if result.RowsAffected == 0{
 		return app_error.ErrRecordNotFound
 	}
 
-	return nil
-	
-}
+	if result.Error != nil {
+		return result.Error
+	}
 
-func (r *ConversationRepository)UpdateConversationRequest(ctx context.Context, senderId, recipientId string) error{
-	return UpdateConversationRequest(ctx, r.db, senderId, recipientId)
+	return nil
+}
+func (r *ConversationRepository)DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error{
+	return DeleteConversationRequest(ctx, r.db, senderId, recipientId)
 }
 
 func (r *ConversationRepository) CreateConversation(ctx context.Context, conversation *entity.Conversation) error{
@@ -59,7 +57,7 @@ func (r *ConversationRepository) CreateConversationMembership(ctx context.Contex
 
 func (r *ConversationRepository)AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error){
 	tx := r.db.Begin()
-	if err := UpdateConversationRequest(ctx, tx, senderId, recipientId); err != nil{
+	if err := DeleteConversationRequest(ctx, tx, senderId, recipientId); err != nil{
 		tx.Rollback()
 		return nil,err
 	}
