@@ -15,14 +15,17 @@ import (
 	auth_repository "github.com/quocsi014/modules/auth/repository"
 	"github.com/quocsi014/modules/auth/repository/rds"
 	auth_service "github.com/quocsi014/modules/auth/service"
-	conversation_handler "github.com/quocsi014/modules/conversation/handler"
-	conversation_repository "github.com/quocsi014/modules/conversation/repository"
-	conversation_service "github.com/quocsi014/modules/conversation/service"
+	conversation_request_handler "github.com/quocsi014/modules/conversation-request/handler"
+	conversation_request_repository "github.com/quocsi014/modules/conversation-request/repository"
+	conversation_request_service "github.com/quocsi014/modules/conversation-request/service"
 	"github.com/quocsi014/modules/user_information/handler"
 	"github.com/quocsi014/modules/user_information/repository"
 	"github.com/quocsi014/modules/user_information/service"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	conversation_handler "github.com/quocsi014/modules/conversation/handler"
+	conversation_repository "github.com/quocsi014/modules/conversation/repository"
+	conversation_service "github.com/quocsi014/modules/conversation/service"
 )
 
 func main() {
@@ -79,10 +82,18 @@ func main() {
 		userHandler := handler.NewUserHandler(userService)
 		userHandler.SetupRoute(userGroup)
 
+		conversationRequestGroup := v1Group.Group("/conversations")
+		{
+			conversationRequestRepo := conversation_request_repository.NewConversationRequestRepository(db)
+			conversationRequestService := conversation_request_service.NewConversationRequestService(conversationRequestRepo, userService)
+			conversationRequestHandler := conversation_request_handler.NewConversationRequestHandler(conversationRequestService)
+			conversationRequestHandler.SetupRoute(conversationRequestGroup)
+		}
+
 		conversationGroup := v1Group.Group("/conversations")
 		{
 			conversationRepo := conversation_repository.NewConversationRepository(db)
-			conversationService := conversation_service.NewConversationService(conversationRepo, userService)
+			conversationService := conversation_service.NewConversationService(conversationRepo)
 			conversationHandler := conversation_handler.NewConversationHandler(conversationService)
 			conversationHandler.SetupRoute(conversationGroup)
 		}

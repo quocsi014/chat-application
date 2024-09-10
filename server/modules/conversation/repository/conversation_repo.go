@@ -1,103 +1,39 @@
 package repository
 
 import (
-	"context"
-
-	"github.com/google/uuid"
-	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/conversation/entity"
 	"gorm.io/gorm"
 )
 
-type ConversationRepository struct {
+type ConversationRepository interface {
+	GetConversations(userId string) ([]entity.ConversationResponse, error)
+}
+
+type conversationRepository struct {
 	db *gorm.DB
 }
 
-func NewConversationRepository(db *gorm.DB) *ConversationRepository {
-	return &ConversationRepository{
-		db: db,
-	}
+func NewConversationRepository(db *gorm.DB) *conversationRepository {
+	return &conversationRepository{db: db}
 }
 
-func (r *ConversationRepository) CreateConversationRequest(ctx context.Context, req *entity.ConversationRequest) error {
-	if err := r.db.Table((&entity.ConversationRequest{}).TableName()).WithContext(ctx).Create(req).Error; err != nil {
-		return app_error.ErrDatabase(err)
-	}
-	return nil
+func (r *conversationRepository) GetConversations(userId string) ([]entity.ConversationResponse, error) {
+	var conversations []entity.ConversationResponse
+	
+	err := r.db.Raw(`
+		select c.id, c.is_group, coalesce(gd.name, concat_ws(' ',u.firstname, u.lastname)) as name, 
+		coalesce(gd.avatar_url, u.avatar_url) as avatar_url, m.message, 
+		concat_ws(' ', u2.firstname, u2.lastname) as user_name_sender 
+		from conversation_memberships cm 
+		left join conversations c on cm.conversation_id = c.id 
+		left join group_details gd on c.id = gd.id and c.is_group = 1 
+		left join conversation_memberships cm2 on cm2.conversation_id = c.id and c.is_group = 0 and cm2.user_id != ?
+		left join users u on u.id = cm2.user_id 
+		left join messages m on c.last_message_id = m.id 
+		left join users u2 on u2.id = m.user_id 
+		where cm.user_id = ? 
+		order by c.last_message_time
+	`, userId, userId).Scan(&conversations).Error
+
+	return conversations, err
 }
-
-func DeleteConversationRequest(ctx context.Context, db *gorm.DB, senderId, recipientId string) error {
-	conversationRequest := entity.NewConversationRequest(senderId, recipientId)
-	result := db.Table(conversationRequest.TableName()).Where("sender_id = ? and recipient_id = ?", senderId, recipientId).Delete(conversationRequest)
-	if result.RowsAffected == 0{
-		return app_error.ErrRecordNotFound
-	}
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
-}
-func (r *ConversationRepository)DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error{
-	return DeleteConversationRequest(ctx, r.db, senderId, recipientId)
-}
-
-func (r *ConversationRepository) CreateConversation(ctx context.Context, conversation *entity.Conversation) error{
-	return r.db.Table(conversation.TableName()).Create(conversation).Error
-}
-
-func CreateConversationMembership(ctx context.Context, db *gorm.DB, conversationMembership *entity.ConversationMembership) error{
-	return db.Table(conversationMembership.TableName()).Create(conversationMembership).Error
-}
-
-func (r *ConversationRepository) CreateConversationMembership(ctx context.Context, conversationMembership *entity.ConversationMembership) error{
-	return r.db.Table(conversationMembership.TableName()).Create(conversationMembership).Error
-}
-
-func (r *ConversationRepository)AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*entity.Conversation, error){
-	tx := r.db.Begin()
-	if err := DeleteConversationRequest(ctx, tx, senderId, recipientId); err != nil{
-		tx.Rollback()
-		return nil,err
-	}
-	conversationId := uuid.New()
-	conversation := entity.NewConversation(conversationId.String(), false)
-	if err := tx.Table(conversation.TableName()).Create(conversation).Error; err != nil{
-		tx.Rollback()
-		return nil, err
-	}
-
-	senderMembership := entity.NewConversationMembershipMemberRole(conversationId.String(), senderId)
-	recipientMembership := entity.NewConversationMembershipMemberRole(conversationId.String(), recipientId)
-
-	if err := CreateConversationMembership(ctx, tx, senderMembership); err != nil{
-		tx.Rollback()
-		return nil, err
-	}
-	if err := CreateConversationMembership(ctx, tx, recipientMembership); err != nil{
-		tx.Rollback()
-		return nil, err
-	}
-	tx.Commit()
-	return conversation, nil
-}
-
-func (r *ConversationRepository)GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error){
-	var conversationReqs []entity.ConversationRequestDetail
-
-	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("sender_id = ?", senderId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil{
-		return nil, err
-	}
-	return conversationReqs, nil
-}
-
-func (r *ConversationRepository)GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error){
-	var conversationReqs []entity.ConversationRequestDetail
-
-	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("recipient_id = ?", recipientId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil{
-		return nil, err
-	}
-	return conversationReqs, nil
-}
-

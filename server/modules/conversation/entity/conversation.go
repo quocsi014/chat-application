@@ -3,12 +3,13 @@ package entity
 import (
 	"time"
 
-	"github.com/quocsi014/modules/user_information/entity"
 )
 
 type Conversation struct{
 	Id string `json:"id" gorm:"column:id"`
 	IsGroup bool `json:"is_group" gorm:"column:id"`
+	LastMessageTime *time.Time `json:"last_message_time" gorm:"column:last_message_time"`
+	LastMessageId *string `json:"last_message_id" gorm:"column:last_message_id"`
 	CreatedAt *time.Time `json:"created_at" gorm:"column:created_at"`
 }
 
@@ -26,9 +27,8 @@ func (c *Conversation)TableName() string{
 }
 
 type ConversationDetail struct{
-	Id string `json:"id" gorm:"column:id"`
 	Name string `json:"name" gorm:"column:name"`
-	Avatar string `json:"avatar" gorm:"column:avatar"`
+	Avatar string `json:"avatar_url" gorm:"column:avatar_url"`
 	CreatedBy string `json:"created_by" gorm:"created_by"`
 }
 
@@ -36,34 +36,6 @@ func (cd *ConversationDetail)TableName() string{
 	return "conversation_details"
 }
 
-type ConversationRequest struct{
-	SenderId string `json:"sender_id" gorm:"column:sender_id"`
-	RecipientId string `json:"recipient_id" gorm:"column:recipient_id"`
-	RequestedTime *time.Time `json:"requested_time" gorm:"column:requested_time"`
-}
-
-func (cr *ConversationRequest)TableName() string{
-	return "conversation_requests"
-}
-
-
-func NewConversationRequest(senderId, recipientId string) *ConversationRequest {
-	now := time.Now()
-	return &ConversationRequest{
-		SenderId:      senderId,
-		RecipientId:   recipientId,
-		RequestedTime: &now,
-	}
-}
-
-type ConversationRequestDetail struct {
-    ConversationRequest
-    Sender   entity.User `json:"sender" gorm:"foreignKey:SenderId"`
-    Recipient entity.User `json:"recipient" gorm:"foreignKey:RecipientId"`
-}
-func (crd *ConversationRequestDetail)TableName() string{
-	return "conversation_requests"
-}
 
 type ConversationMembership struct{
 	ConversationId string `json:"conversation_id" gorm:"column:conversation_id"`
@@ -84,4 +56,11 @@ func NewConversationMembershipMemberRole(conversationId, userId string) *Convers
 		Role: "MEMBER",
 		JoinedTime: &now,
 	}
+}
+
+type ConversationResponse struct{
+	Conversation
+	ConversationDetail
+	LastMessage string`json:"last_message" gorm:"message"`
+	UserNameSender string `json:"user_name_sender" gorm:"column:user_name_sender"`
 }
