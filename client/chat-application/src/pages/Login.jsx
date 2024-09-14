@@ -26,7 +26,7 @@ function Login() {
     API_Login(account, password)
       .then((result) => {
         setCookie("access_token", result.data.token, 30);
-        navigate("/");
+        navigate("/conversations");
       })
       .catch((error) => {
         if (error.status == 401) {

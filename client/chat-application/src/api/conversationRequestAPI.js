@@ -9,3 +9,12 @@ export const getRequestSent = (token) => {
   };
   return axios.get(`${API_URL}/conversations/requests/sent`, config);
 };
+
+export const getRequestReceived = (token) => {
+  let config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+  return axios.get(`${API_URL}/conversations/requests/received`, config);
+};
