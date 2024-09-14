@@ -8,8 +8,11 @@ import { useThrottle } from "../hooks/useThrottle";
 import { useNavigate } from "react-router-dom";
 import defaultAvatar from "../assets/default_avatar.png";
 import { BiX } from "react-icons/bi";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleSearchUser } from "../redux/SearchUser/searchUserSlice";
 
-function SearchUsersModal({ isOpen, onClose }) {
+function SearchUsersModal() {
+  const isOpen = useSelector(state => state.searchUser.isSearchUserOpen)
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -17,6 +20,8 @@ function SearchUsersModal({ isOpen, onClose }) {
   const totalPages = useRef(null);
   const searchInputRef = useRef(null);
   const isSearchingRef = useRef(false);
+
+  const disPatch = useDispatch()
 
   const navigate = useNavigate();
 
@@ -82,6 +87,10 @@ function SearchUsersModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
+  const onClose = ()=>{
+    disPatch(toggleSearchUser())
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-3xl w-152 h-120 flex flex-col">
@@ -94,16 +103,19 @@ function SearchUsersModal({ isOpen, onClose }) {
             <BiX size={24} />
           </button>
         </div>
-        <input
-          type="text"
-          placeholder="Type username to search for users"
-          className="p-2 border-2 bg-gray-200 outline-none border-gray-200 focus:border-gray-300 box-border rounded-full w-full mt-2"
-          value={searchTerm}
-          ref={searchInputRef}
-          onChange={(e) => {
-            handleSearchChange(e);
-          }}
-        />
+        <div className="relative mt-2">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <span className="text-gray-500">@</span>
+          </div>
+          <input
+            type="text"
+            placeholder="Type username to search for users"
+            className="p-2 pl-7 border-2 bg-gray-200 outline-none border-gray-200 focus:border-gray-300 box-border rounded-full w-full"
+            value={searchTerm}
+            ref={searchInputRef}
+            onChange={handleSearchChange}
+          />
+        </div>
         <div
           className="size-full overflow-y-auto mt-4 flex flex-col"
           onScroll={() => {
@@ -128,9 +140,12 @@ function SearchUsersModal({ isOpen, onClose }) {
                   <img
                     src={user.avatar_url || defaultAvatar}
                     alt={user.username}
-                    className="w-10 h-10 rounded-full mr-2"
+                    className="w-10 h-10 object-cover rounded-full mr-2"
                   />
-                  <span>{user.username}</span>
+                  <div className="flex flex-col">
+                    <h3 className="font-bold">{user.firstname} {user.lastname}</h3>
+                    <p className="text-gray-500">@{user.username}</p>
+                  </div>
                 </div>
               ))}
             </>
@@ -139,7 +154,7 @@ function SearchUsersModal({ isOpen, onClose }) {
             <Loading size={30} className="text-slate-500 self-center" />
           )}
           {
-            totalPages.current !== null && nextPageNumber.current > totalPages.current && (
+            totalPages.current !== null && searchResults.length > 0 && nextPageNumber.current > totalPages.current && (
               <div className="text-gray-500 self-center">No more users</div>
             )
           }

@@ -17,3 +17,25 @@ dialog{
   left: 50%;
   transform: translateY(-50%) translateX(-50%);
 }
+
+/* CSS cho thanh cuộn dọc */
+::-webkit-scrollbar {
+  width: 1px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+}
