@@ -61,6 +61,6 @@ func NewConversationMembershipMemberRole(conversationId, userId string) *Convers
 type ConversationResponse struct{
 	Conversation
 	ConversationDetail
-	LastMessage string`json:"last_message" gorm:"message"`
+	LastMessage string`json:"message" gorm:"column:message"`
 	UserNameSender string `json:"user_name_sender" gorm:"column:user_name_sender"`
 }

@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"github.com/quocsi014/common"
+	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/conversation/entity"
 	"gorm.io/gorm"
 )
@@ -17,11 +19,22 @@ func NewConversationRepository(db *gorm.DB) *conversationRepository {
 	return &conversationRepository{db: db}
 }
 
-func (r *conversationRepository) GetConversations(userId string) ([]entity.ConversationResponse, error) {
+func (r *conversationRepository) GetConversations(userId string, paging *common.Paging) ([]entity.ConversationResponse, error) {
 	var conversations []entity.ConversationResponse
+  var totalRows int64
+
+  if err := r.db.Table((&entity.ConversationMembership{}).TableName()).Where("user_id = ?", userId).Count(&totalRows).Error; err != nil{
+    return conversations, app_error.ErrDatabase(err)
+  }
+
+    paging.TotalPage = int64(totalRows) / int64(paging.Limit)
+	if int64(totalRows)%int64(paging.Limit) != 0 {
+		paging.TotalPage++
+	}
 	
-	err := r.db.Raw(`
-		select c.id, c.is_group, coalesce(gd.name, concat_ws(' ',u.firstname, u.lastname)) as name, 
+	db := r.db.Raw(`
+		select c.id, c.is_group, coalesce(gd.name, concat_ws(' ',u.firstname, u.lastname)) as name,
+		c.last_message_id, c.last_message_time,
 		coalesce(gd.avatar_url, u.avatar_url) as avatar_url, m.message, 
 		concat_ws(' ', u2.firstname, u2.lastname) as user_name_sender 
 		from conversation_memberships cm 
@@ -33,7 +46,13 @@ func (r *conversationRepository) GetConversations(userId string) ([]entity.Conve
 		left join users u2 on u2.id = m.user_id 
 		where cm.user_id = ? 
 		order by c.last_message_time
-	`, userId, userId).Scan(&conversations).Error
+		limit ? offset ?
+	`, userId, userId, paging.Limit, (paging.Page-1)*paging.Limit)
 
-	return conversations, err
+  if err := db.Scan(&conversations).Error; err != nil {
+    return conversations, app_error.ErrDatabase(err)
+  }
+
+	return conversations, nil
 }
+

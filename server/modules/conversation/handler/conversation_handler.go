@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/quocsi014/common"
+	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/helper"
 	"github.com/quocsi014/middleware"
 	"github.com/quocsi014/modules/conversation/service"
@@ -17,21 +19,34 @@ func NewConversationHandler(service service.IConversationService) *ConversationH
 	return &ConversationHandler{service: service}
 }
 
-func (h *ConversationHandler) GetConversations(c *gin.Context) {
-	userId := helper.GetUserId(c)
-	if userId == "" {
-		return
-	}
+func (h *ConversationHandler) GetConversations() func(*gin.Context) {
+  return func(ctx *gin.Context){
 
-	conversations, err := h.service.GetConversations(userId)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	  userId := helper.GetUserId(ctx)
+	  if userId == "" {
+		  return
+	  }
+		var paging common.Paging
+		if err := ctx.ShouldBind(&paging); err != nil {
+			ctx.JSON(http.StatusBadRequest, app_error.ErrInvalidRequest(err))
+			return
+		}
+		paging.Process()
 
-	c.JSON(http.StatusOK, conversations)
+
+	  conversations, err := h.service.GetConversations(userId, &paging)
+	  if err != nil {
+		  ctx.JSON(http.StatusInternalServerError, err)
+		  return
+	  }
+
+	  ctx.JSON(http.StatusOK, gin.H{
+      "paging": paging,
+      "conversations": conversations,
+    })
+  }
 }
 
 func (h *ConversationHandler) SetupRoute(group *gin.RouterGroup) {
-	group.GET("", middleware.VerifyToken(), h.GetConversations)
+	group.GET("", middleware.VerifyToken(), h.GetConversations())
 }
