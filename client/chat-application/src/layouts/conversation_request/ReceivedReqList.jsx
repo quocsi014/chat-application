@@ -1,21 +1,46 @@
-import { getRequestReceived } from "../../api/conversationRequestAPI";
+import {
+  acceptRequest,
+  getRequestReceived,
+  rejectRequest,
+} from "../../api/conversationRequestAPI";
 import defaultAvatar from "../../assets/default_avatar.png";
-import { getCookie } from "../../utils/cookie";
 import { useState, useEffect } from "react";
 function ReceivedReqList() {
   const [reqList, setReqList] = useState([]);
 
   useEffect(() => {
-    let token = getCookie("access_token");
-    getRequestReceived(token)
+    getRequestReceived()
       .then((res) => {
-        console.table(res.data);
         setReqList(res.data);
       })
       .catch((error) => {
         console.log(error);
       });
   }, []);
+
+  const handleAccept = (senderId) => {
+    acceptRequest(senderId)
+      .then(() => {
+        setReqList((prevReqList) =>
+          prevReqList.filter((req) => req.sender.id !== senderId)
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  const handleReject = (senderId) => {
+    rejectRequest(senderId)
+      .then(() => {
+        setReqList((prevReqList) =>
+          prevReqList.filter((req) => req.sender.id !== senderId)
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
 
   return (
     <div>
@@ -40,11 +65,21 @@ function ReceivedReqList() {
                 </div>
               </div>
               <div>
-                <button className="px-2 bg-gray-300 hover:bg-gray-500 text-lg text-white rounded-md">
+                <button
+                  onClick={(e) => {
+                    handleReject(req.sender.id);
+                  }}
+                  className="px-2 bg-gray-300 hover:bg-gray-500 text-lg text-white rounded-md"
+                >
                   reject
                 </button>
-                <button className="px-2 bg-blue-400 hover:bg-blue-600 ml-2 text-lg text-white rounded-md">
-                  agree
+                <button
+                  onClick={(e) => {
+                    handleAccept(req.sender.id);
+                  }}
+                  className="px-2 bg-blue-400 hover:bg-blue-600 ml-2 text-lg text-white rounded-md"
+                >
+                  accept
                 </button>
               </div>
             </div>
