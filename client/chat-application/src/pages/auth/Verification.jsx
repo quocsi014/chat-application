@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import LoadingButton from "../components/LoadingButton";
+import LoadingButton from "../../components/LoadingButton";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { API_Verify } from "../api/authAPI";
-import { setCookie } from "../utils/cookie";
+import { API_Verify } from "../../api/authAPI";
+import { setCookie } from "../../utils/cookie";
 
 function Verification() {
   const [isVerifying, setIsVerifying] = useState(false);

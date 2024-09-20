@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
 
+
 function TextField(props) {
-  const { title, type, value, setValue, errorMessage, setErrorMessage, id } =
+  const { title, type, value, setValue, errorMessage, setErrorMessage, id, inputRef } =
     props;
 
   return (
@@ -10,6 +11,7 @@ function TextField(props) {
         {title}
       </label>
       <input
+        ref={inputRef}
         className={`outline-none px-2 border-0 border-b-2 focus:border-gray-400 text-lg w-96 ${
           errorMessage != "" ? "border-red-300" : "border-gray-100"
         }`}

@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import TextField from "../components/TextField";
-import { API_Login } from "../api/authAPI";
+import { useEffect, useState,useRef } from "react";
+import TextField from "../../components/TextField";
+import { API_Login } from "../../api/authAPI";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/logo.png";
-import { setCookie } from "../utils/cookie";
-import LoadingButton from "../components/LoadingButton";
+import logo from "../../assets/logo.png";
+import { setCookie } from "../../utils/cookie";
+import LoadingButton from "../../components/LoadingButton";
 
 function Login() {
   const [account, setAccount] = useState("");
@@ -14,11 +14,14 @@ function Login() {
 
   const [isLogining, setIsLogining] = useState(false);
 
+  const emailInputRef = useRef(null);
+
   const BLANK_FIELD_QUOTE = "This field can not be blank";
   let navigate = useNavigate();
 
   useEffect(() => {
     document.title = "Login - Chat";
+    emailInputRef.current.focus();
   }, []);
 
   const handleLogin = () => {
@@ -64,12 +67,13 @@ function Login() {
         <img src={logo} alt="" className="w-52" />
         <h1 className="font-extrabold text-5xl mb-10">Login</h1>
         <TextField
-          title="Email or username"
+          title="Email"
           type="text"
           value={account}
           setValue={setAccount}
           errorMessage={accountErrorMessage}
           setErrorMessage={setAccountErrorMessage}
+          inputRef={emailInputRef}
           id="email_or_password"
         />
         <TextField

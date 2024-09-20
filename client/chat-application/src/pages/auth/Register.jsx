@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react"
-import logo from "../assets/logo.png"
-import TextField from "../components/TextField"
+import logo from "../../assets/logo.png"
+import TextField from "../../components/TextField"
 import { Link } from "react-router-dom"
-import { API_Register } from "../api/authAPI"
-import LoadingButton from "../components/LoadingButton"
+import { API_Register } from "../../api/authAPI"
+import LoadingButton from "../../components/LoadingButton"
 import { useMemo } from "react"
 
 function Register(){

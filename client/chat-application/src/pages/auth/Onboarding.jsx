@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import TextField from "../components/TextField";
-import LoadingButton from "../components/LoadingButton";
-import defaultAvatar from "../assets/default_avatar.png";
+import TextField from "../../components/TextField";
+import LoadingButton from "../../components/LoadingButton";
+import defaultAvatar from "../../assets/default_avatar.png";
 import { BiSolidEdit } from "react-icons/bi";
 import axios from "axios";
-import { createUser } from "../api/userAPI";
-import { getCookie } from "../utils/cookie";
+import { createUser } from "../../api/userAPI";
+import { getCookie } from "../../utils/cookie";
 import { useNavigate } from "react-router-dom";
 
 function OnBoarding() {

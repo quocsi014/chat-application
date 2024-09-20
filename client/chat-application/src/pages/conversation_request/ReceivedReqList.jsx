@@ -27,6 +27,7 @@ function ReceivedReqList() {
       })
       .catch((error) => {
         console.log(error);
+        alert("Fail, something went wrong")
       });
   };
 
@@ -39,6 +40,7 @@ function ReceivedReqList() {
       })
       .catch((error) => {
         console.log(error);
+        alert("Fail, something went wrong")
       });
   };
 

@@ -1,7 +1,7 @@
 import { BiSearch } from "react-icons/bi"
-import Chat from "../components/Chat"
+import Chat from "../../components/Chat"
 import { useDispatch } from "react-redux";
-import { toggleSearchUser } from "../redux/SearchUser/searchUserSlice";
+import { toggleSearchUser } from "../../redux/SearchUser/searchUserSlice";
 
 function ConversationList(props){
 
