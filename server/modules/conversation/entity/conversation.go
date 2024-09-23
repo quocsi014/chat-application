@@ -2,12 +2,11 @@ package entity
 
 import (
 	"time"
-
 )
 
 type Conversation struct{
 	Id string `json:"id" gorm:"column:id"`
-	IsGroup bool `json:"is_group" gorm:"column:id"`
+	IsGroup bool `json:"is_group" gorm:"column:is_group"`
 	LastMessageTime *time.Time `json:"last_message_time" gorm:"column:last_message_time"`
 	LastMessageId *string `json:"last_message_id" gorm:"column:last_message_id"`
 	CreatedAt *time.Time `json:"created_at" gorm:"column:created_at"`

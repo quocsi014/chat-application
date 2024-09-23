@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
+
+	"github.com/quocsi014/common"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/user_information/entity"
 	"gorm.io/gorm"
-	"github.com/quocsi014/common"
 )
 
 type UserRepository struct{
@@ -53,8 +54,7 @@ func (repo *UserRepository) GetUsersByUsername(ctx context.Context, username str
 	var users []*entity.User
 	var totalRows int64
 
-	db := repo.db.Table((&entity.User{}).TableName()).Where("username LIKE ?", "%"+username+"%")
-
+	db := repo.db.Table((&entity.User{}).TableName()).Joins("left join conversation_requests on users.id = sender_id or users.id = recipient_id").Where("username LIKE ?", "%"+username+"%")
 	if err := db.Count(&totalRows).Error; err != nil {
 		return nil, err
 	}

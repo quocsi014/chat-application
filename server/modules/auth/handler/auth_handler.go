@@ -158,3 +158,4 @@ func(handler *AuthHandler)SetupRoute(group *gin.RouterGroup){
 	group.POST("/register", handler.Register())
 	group.POST("/verify", middleware.VerifyToken(), handler.VerifyRegistration())
 }
+
