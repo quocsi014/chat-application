@@ -22,6 +22,7 @@ function LoadingButton(props) {
     >
       {isLoading ? <div className="animate-spin"><BiLoaderAlt size={28}/></div> : value}
     </button>
+    
   );  
 }
 

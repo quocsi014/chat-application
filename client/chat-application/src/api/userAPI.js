@@ -1,4 +1,6 @@
 import axios from "axios";
+import { tokenConfig } from "./utils";
+
 
 const API_URL = import.meta.env.REACT_APP_API_URL;
 
@@ -33,7 +35,9 @@ export const getUserById = (token) => {
 };
 
 export const searchUsers = (searchTerm, page, limit) => {
+  const config = tokenConfig()
   return axios.get(
-    `${API_URL}/users/profile?username=${searchTerm}&page=${page}&limit=${limit}`
+    `${API_URL}/users/profile?username=${searchTerm}&page=${page}&limit=${limit}`,
+    config
   );
 };
