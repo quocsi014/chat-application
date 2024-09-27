@@ -18,14 +18,18 @@ import (
 	conversation_request_handler "github.com/quocsi014/modules/conversation-request/handler"
 	conversation_request_repository "github.com/quocsi014/modules/conversation-request/repository"
 	conversation_request_service "github.com/quocsi014/modules/conversation-request/service"
+	conversation_handler "github.com/quocsi014/modules/conversation/handler"
+	conversation_repository "github.com/quocsi014/modules/conversation/repository"
+	conversation_service "github.com/quocsi014/modules/conversation/service"
+	message_handler "github.com/quocsi014/modules/message/handler"
+	message_repository "github.com/quocsi014/modules/message/repository"
+	message_service "github.com/quocsi014/modules/message/service"
+
 	"github.com/quocsi014/modules/user_information/handler"
 	"github.com/quocsi014/modules/user_information/repository"
 	"github.com/quocsi014/modules/user_information/service"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	conversation_handler "github.com/quocsi014/modules/conversation/handler"
-	conversation_repository "github.com/quocsi014/modules/conversation/repository"
-	conversation_service "github.com/quocsi014/modules/conversation/service"
 )
 
 func main() {
@@ -96,7 +100,15 @@ func main() {
 			conversationService := conversation_service.NewConversationService(conversationRepo)
 			conversationHandler := conversation_handler.NewConversationHandler(conversationService)
 			conversationHandler.SetupRoute(conversationGroup)
+			messageGroup := conversationGroup.Group("/:conversation_id/messages")
+			{
+				messageRepo := message_repository.NewMessageRepository(db)
+				messageService := message_service.NewMessageService(messageRepo)
+				messageHandler := message_handler.NewMessageHandler(messageService)
+				messageHandler.SetupRoute(messageGroup)
+			}
 		}
+
 	}
 	r.Run()
 }
