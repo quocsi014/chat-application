@@ -33,29 +33,3 @@ type ConversationRequestDetail struct {
 func (crd *ConversationRequestDetail) TableName() string {
 	return "conversation_requests"
 }
-
-type UserRelationship struct {
-	UserId   string `json:"user_id" gorm:"column:user_id"`
-	FriendId string `json:"friend_id" gorm:"column:friend_id"`
-	Status   string `json:"status" gorm:"column:status"`
-}
-
-func NewUserRelationship(userId, friendId string) *UserRelationship {
-	return &UserRelationship{
-		UserId:   userId,
-		FriendId: friendId,
-		Status:   "PENDING",
-	}
-}
-
-func NewUserRelationshipWithAccepted(userId, friendId string) *UserRelationship {
-	return &UserRelationship{
-		UserId:   userId,
-		FriendId: friendId,
-		Status:   "ACCEPTED",
-	}
-}
-
-func (ur *UserRelationship) TableName() string {
-	return "user_relationships"
-}

@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"github.com/quocsi014/common"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/message/entity"
 )
 
 type IMessageRepo interface {
 	InsertMessage(ctx context.Context, message *entity.Message) error
+	GetMessages(ctx context.Context, paging *common.Paging, conversationId string) ([]entity.Message, error)
 }
 
 type MessageService struct {
@@ -25,4 +27,8 @@ func (ms *MessageService) SendMessage(ctx context.Context, message *entity.Messa
 		return app_error.ErrDatabase(err)
 	}
 	return nil
+}
+
+func (ms *MessageService) GetMessages(ctx context.Context, paging *common.Paging, conversationId string) ([]entity.Message, error) {
+	return ms.repo.GetMessages(ctx, paging, conversationId)
 }

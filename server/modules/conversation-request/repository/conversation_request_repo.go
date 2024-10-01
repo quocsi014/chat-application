@@ -7,6 +7,7 @@ import (
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/conversation-request/entity"
 	conversationEntity "github.com/quocsi014/modules/conversation/entity"
+	userEntity "github.com/quocsi014/modules/user_information/entity"
 	"gorm.io/gorm"
 )
 
@@ -26,7 +27,7 @@ func (r *ConversationRequestRepository) CreateConversationRequest(ctx context.Co
 		tx.Rollback()
 		return app_error.ErrDatabase(err)
 	}
-	userRelationship := entity.NewUserRelationship(req.SenderId, req.RecipientId)
+	userRelationship := userEntity.NewUserRelationship(req.SenderId, req.RecipientId)
 	if err := tx.Table(userRelationship.TableName()).Create(userRelationship).Error; err != nil {
 		tx.Rollback()
 		return app_error.ErrDatabase(err)
@@ -72,14 +73,8 @@ func (r *ConversationRequestRepository) AcceptConversationRequest(ctx context.Co
 		return nil, err
 	}
 
-	userRelationship := entity.NewUserRelationshipWithAccepted(recipientId, senderId)
-
-	if err := tx.Table(userRelationship.TableName()).Create(userRelationship).Error; err != nil {
-		tx.Rollback()
-		return nil, app_error.ErrDatabase(err)
-	}
-
-	if err := tx.Table(userRelationship.TableName()).Where("user_id = ? and friend_id = ?", senderId, recipientId).Update("status", "ACCEPTED").Error; err != nil {
+	userRelationship := userEntity.NewUserRelationshipWithAccept(senderId, recipientId, conversationId.String())
+	if err := tx.Table(userRelationship.TableName()).Where("user_id = ? and friend_id = ?", senderId, recipientId).Updates(userRelationship).Error; err != nil {
 		tx.Rollback()
 		return nil, app_error.ErrDatabase(err)
 	}
@@ -108,7 +103,7 @@ func (r *ConversationRequestRepository) AcceptConversationRequest(ctx context.Co
 func (r *ConversationRequestRepository) GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error) {
 	var conversationReqs []entity.ConversationRequestDetail
 
-	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("sender_id = ? and status = 'PENDING'", senderId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
+	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("sender_id = ?", senderId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
 		return nil, err
 	}
 	return conversationReqs, nil
@@ -116,7 +111,7 @@ func (r *ConversationRequestRepository) GetConversationRequestSent(ctx context.C
 
 func (r *ConversationRequestRepository) GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error) {
 	var conversationReqs []entity.ConversationRequestDetail
-	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("recipient_id = ? and status = 'PENDING'", recipientId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
+	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("recipient_id = ?", recipientId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
 		return nil, err
 	}
 	return conversationReqs, nil

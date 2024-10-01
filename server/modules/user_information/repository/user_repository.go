@@ -10,24 +10,24 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository struct{
+type UserRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository{
+func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{
 		db: db,
 	}
 }
 
-func (repo *UserRepository)InsertUser(ctx context.Context, user *entity.User) error{
+func (repo *UserRepository) InsertUser(ctx context.Context, user *entity.User) error {
 	return repo.db.Save(user).Error
 }
 
-func (repo *UserRepository)FindUserById(ctx context.Context, id string) (*entity.User, error){
+func (repo *UserRepository) FindUserById(ctx context.Context, id string) (*entity.User, error) {
 	user := entity.User{}
-	if err := repo.db.Where("id = ?", id).First(&user).Error; err != nil{
-		if errors.Is(err, gorm.ErrRecordNotFound){
+	if err := repo.db.Where("id = ?", id).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, app_error.ErrRecordNotFound
 		}
 		return nil, err
@@ -54,17 +54,16 @@ func (repo *UserRepository) GetUsersByUsername(ctx context.Context, username str
 	var users []*entity.User
 	var totalRows int64
 
-	db := repo.db.Table((&entity.User{}).TableName()).Joins("left join conversation_requests on users.id = sender_id or users.id = recipient_id").Where("username LIKE ?", "%"+username+"%")
+	db := repo.db.Table((&entity.User{}).TableName()).Where("username LIKE ?", "%"+username+"%")
 	if err := db.Count(&totalRows).Error; err != nil {
 		return nil, err
 	}
 
-	if err := db.Offset((paging.Page - 1) * paging.Limit).
-		Limit(paging.Limit).
-		Find(&users).Error; err != nil {
+	offset := (paging.Page - 1) * paging.Limit
+	db = repo.db.Raw("select * from users u left join user_relationships ur on u.id = ur.user_id or u.id = ur.friend_id where u.username like ? limit ? offset ?", "%"+username+"%", paging.Limit, offset)
+	if err := db.Scan(&users).Error; err != nil {
 		return nil, err
 	}
-
 	paging.TotalPage = int64(totalRows) / int64(paging.Limit)
 	if int64(totalRows)%int64(paging.Limit) != 0 {
 		paging.TotalPage++

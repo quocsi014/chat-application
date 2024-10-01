@@ -2,15 +2,15 @@ package entity
 
 import (
 	"errors"
-
 	"github.com/quocsi014/common/app_error"
 )
 
 type UserInformation struct {
-	Username  *string `json:"username,omitempty" gorm:"column:username"`
-	Firstname *string `json:"firstname,omitempty" gorm:"column:firstname"`
-	Lastname  *string `json:"lastname,omitempty" gorm:"column:lastname"`
-	AvatarURL *string `json:"avatar_url,omitempty" gorm:"column:avatar_url"`
+	Username         *string `json:"username,omitempty" gorm:"column:username"`
+	Firstname        *string `json:"firstname,omitempty" gorm:"column:firstname"`
+	Lastname         *string `json:"lastname,omitempty" gorm:"column:lastname"`
+	AvatarURL        *string `json:"avatar_url,omitempty" gorm:"column:avatar_url"`
+	UserRelationship `json:"user_relationship"`
 }
 
 type User struct {
@@ -33,6 +33,35 @@ func NewUser(username, firstname, lastname, avatar_url string) *User {
 	}
 }
 
+type UserRelationship struct {
+	UserId         string  `json:"user_id,omitempty" gorm:"column:user_id"`
+	FriendId       string  `json:"friend_id,omitempty" gorm:"column:friend_id"`
+	Status         string  `json:"status,omitempty" gorm:"column:status"`
+	ConversationId *string `json:"conversation_id,omitempty" gorm:"column:conversation_id"`
+	BlockedUserId  *string `json:"blocked_user_id,omitempty" gorm:"column:blocked_user_id"`
+}
+
+func NewUserRelationship(userId, friendId string) *UserRelationship {
+	return &UserRelationship{
+		UserId:   userId,
+		FriendId: friendId,
+		Status:   "PENDING",
+	}
+}
+
+func NewUserRelationshipWithAccept(userId, friendId, conversationId string) *UserRelationship {
+	return &UserRelationship{
+		UserId:         userId,
+		FriendId:       friendId,
+		Status:         "ACCEPTED",
+		ConversationId: &conversationId,
+	}
+}
+
+func (ur *UserRelationship) TableName() string {
+	return "user_relationships"
+}
+
 // Các định nghĩa lỗi đã được cập nhật
 var (
 	ErrBlankFirstname = app_error.ErrInvalidData(errors.New("firstname is blank"), "BLANK_FIRSTNAME", "firstname cannot be blank")
@@ -51,8 +80,8 @@ var (
 
 	ErrUserNotFound = app_error.ErrNotFound(errors.New("user not found"), "USER_NOT_FOUND", "the user does not exist")
 
-	ErrBlankUsername = app_error.ErrInvalidData(errors.New("username is blank"), "BLANK_USERNAME", "username cannot be blank")
-	ErrInvalidUsername = app_error.ErrInvalidData(errors.New("username has invalid characters"), "INVALID_USERNAME", "username can only contain letters, numbers, and underscores")
+	ErrBlankUsername    = app_error.ErrInvalidData(errors.New("username is blank"), "BLANK_USERNAME", "username cannot be blank")
+	ErrInvalidUsername  = app_error.ErrInvalidData(errors.New("username has invalid characters"), "INVALID_USERNAME", "username can only contain letters, numbers, and underscores")
 	ErrUsernameTooShort = app_error.ErrInvalidData(errors.New("username is too short"), "USERNAME_TOO_SHORT", "username must be at least 3 characters long")
-	ErrUsernameTaken = app_error.ErrConflictData(errors.New("username is already taken"), "USERNAME_TAKEN", "this username is already in use")
+	ErrUsernameTaken    = app_error.ErrConflictData(errors.New("username is already taken"), "USERNAME_TAKEN", "this username is already in use")
 )
