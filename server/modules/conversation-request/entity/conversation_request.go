@@ -6,9 +6,9 @@ import (
 )
 
 type ConversationRequest struct {
-	SenderId      string     `json:"sender_id" gorm:"column:sender_id"`
-	RecipientId   string     `json:"recipient_id" gorm:"column:recipient_id"`
-	RequestedTime *time.Time `json:"requested_time" gorm:"column:requested_time"`
+	SenderId      string     `json:"sender_id,omitempty" gorm:"column:sender_id"`
+	RecipientId   string     `json:"recipient_id,omitempty" gorm:"column:recipient_id"`
+	RequestedTime *time.Time `json:"requested_time,omitempty" gorm:"column:requested_time"`
 }
 
 func (cr *ConversationRequest) TableName() string {
@@ -26,8 +26,8 @@ func NewConversationRequest(senderId, recipientId string) *ConversationRequest {
 
 type ConversationRequestDetail struct {
 	ConversationRequest
-	Sender    entity.User `json:"sender" gorm:"foreignKey:SenderId"`
-	Recipient entity.User `json:"recipient" gorm:"foreignKey:RecipientId"`
+	Sender    entity.User `json:"sender,omitempty" gorm:"foreignKey:SenderId"`
+	Recipient entity.User `json:"recipient,omitempty" gorm:"foreignKey:RecipientId"`
 }
 
 func (crd *ConversationRequestDetail) TableName() string {

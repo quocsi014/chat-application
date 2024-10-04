@@ -33,13 +33,13 @@ func PagingBinding(ctx *gin.Context) *Paging {
 }
 
 type PagingResponse[T any] struct {
-	paging *Paging
-	items  []T
+	Paging *Paging `json:"paging"`
+	Items  []T     `json:"items"`
 }
 
 func NewPagingResponse[T any](paging *Paging, items []T) *PagingResponse[T] {
 	return &PagingResponse[T]{
-		paging: paging,
-		items:  items,
+		Paging: paging,
+		Items:  items,
 	}
 }

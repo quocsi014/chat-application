@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/quocsi014/common"
 	"github.com/quocsi014/modules/user_information/service"
 
 	"github.com/quocsi014/common/app_error"
@@ -67,16 +68,16 @@ func (s *ConversationRequestService) DeleteConversationRequest(ctx context.Conte
 	return nil
 }
 
-func (s *ConversationRequestService) GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error) {
-	conversationReqs, err := s.repo.GetConversationRequestSent(ctx, senderId)
+func (s *ConversationRequestService) GetConversationRequestSent(ctx context.Context, senderId string, paging *common.Paging) ([]entity.ConversationRequestDetail, error) {
+	conversationReqs, err := s.repo.GetConversationRequestSent(ctx, senderId, paging)
 	if err != nil {
 		return nil, app_error.ErrDatabase(err)
 	}
 	return conversationReqs, nil
 }
 
-func (s *ConversationRequestService) GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error) {
-	conversationReqs, err := s.repo.GetConversationRequestReceived(ctx, recipientId)
+func (s *ConversationRequestService) GetConversationRequestReceived(ctx context.Context, recipientId string, paging *common.Paging) ([]entity.ConversationRequestDetail, error) {
+	conversationReqs, err := s.repo.GetConversationRequestReceived(ctx, recipientId, paging)
 	if err != nil {
 		return nil, app_error.ErrDatabase(err)
 	}

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/quocsi014/common"
 
 	"github.com/google/uuid"
 	"github.com/quocsi014/common/app_error"
@@ -110,18 +111,30 @@ func (r *ConversationRequestRepository) AcceptConversationRequest(ctx context.Co
 	return conversation, nil
 }
 
-func (r *ConversationRequestRepository) GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error) {
+func (r *ConversationRequestRepository) GetConversationRequestSent(ctx context.Context, senderId string, paging *common.Paging) ([]entity.ConversationRequestDetail, error) {
 	var conversationReqs []entity.ConversationRequestDetail
 
-	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("sender_id = ?", senderId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
+	var count int64
+	db := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("sender_id = ?", senderId)
+	if err := db.Count(&count).Error; err != nil {
+		return nil, app_error.ErrDatabase(err)
+	}
+	paging.Page = int(count/int64(paging.Limit) + 1)
+	if err := db.Preload("Sender").Limit(paging.Limit).Offset(paging.Page * (paging.Limit - 1)).Preload("Recipient").Find(&conversationReqs).Error; err != nil {
 		return nil, err
 	}
 	return conversationReqs, nil
 }
 
-func (r *ConversationRequestRepository) GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error) {
+func (r *ConversationRequestRepository) GetConversationRequestReceived(ctx context.Context, recipientId string, paging *common.Paging) ([]entity.ConversationRequestDetail, error) {
 	var conversationReqs []entity.ConversationRequestDetail
-	if err := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("recipient_id = ?", recipientId).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
+	var count int64
+	db := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("recipient_id = ?", recipientId)
+	if err := db.Count(&count).Error; err != nil {
+		return nil, app_error.ErrDatabase(err)
+	}
+	paging.Page = int(count/int64(paging.Limit) + 1)
+	if err := db.Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
 		return nil, err
 	}
 	return conversationReqs, nil

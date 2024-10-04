@@ -7,18 +7,18 @@ import (
 )
 
 type Conversation struct {
-	Id              string     `json:"id" gorm:"column:id"`
-	IsGroup         bool       `json:"is_group" gorm:"column:is_group"`
-	LastMessageTime *time.Time `json:"last_message_time" gorm:"column:last_message_time"`
-	LastMessageId   *string    `json:"last_message_id" gorm:"column:last_message_id"`
+	Id              string     `json:"id,omitempty" gorm:"column:id"`
+	IsGroup         bool       `json:"is_group,omitempty" gorm:"column:is_group"`
+	LastMessageTime *time.Time `json:"last_message_time,omitempty" gorm:"column:last_message_time"`
+	LastMessageId   *string    `json:"last_message_id,omitempty" gorm:"column:last_message_id"`
 	CreatedAt       *time.Time `json:"created_at" gorm:"column:created_at"`
 }
 
 type ConversationResponse struct {
 	Conversation
 	ConversationDetail
-	LastMessage    string `json:"message" gorm:"column:message"`
-	UserNameSender string `json:"user_name_sender" gorm:"column:user_name_sender"`
+	LastMessage    string `json:"message,omitempty" gorm:"column:message"`
+	UserNameSender string `json:"user_name_sender,omitempty" gorm:"column:user_name_sender"`
 }
 
 func NewConversation(id string, isGroup bool) *Conversation {
@@ -35,9 +35,9 @@ func (c *Conversation) TableName() string {
 }
 
 type ConversationDetail struct {
-	Name      string `json:"name" gorm:"column:name"`
-	Avatar    string `json:"avatar_url" gorm:"column:avatar_url"`
-	CreatedBy string `json:"created_by" gorm:"created_by"`
+	Name      string `json:"name,omitempty" gorm:"column:name"`
+	Avatar    string `json:"avatar_url,omitempty" gorm:"column:avatar_url"`
+	CreatedBy string `json:"created_by,omitempty" gorm:"created_by"`
 }
 
 var (
@@ -50,10 +50,10 @@ func (cd *ConversationDetail) TableName() string {
 }
 
 type ConversationMembership struct {
-	ConversationId string     `json:"conversation_id" gorm:"column:conversation_id"`
-	UserId         string     `json:"user_id" gorm:"column:user_id"`
-	Role           string     `json:"role" gorm:"column:role"`
-	JoinedTime     *time.Time `json:"joined_time" gorm:"columnjoined_time"`
+	ConversationId string     `json:"conversation_id,omitempty" gorm:"column:conversation_id"`
+	UserId         string     `json:"user_id,omitempty" gorm:"column:user_id"`
+	Role           string     `json:"role,omitempty" gorm:"column:role"`
+	JoinedTime     *time.Time `json:"joined_time,omitempty" gorm:"columnjoined_time"`
 }
 
 func (cm *ConversationMembership) TableName() string {

@@ -6,23 +6,23 @@ import (
 	"github.com/quocsi014/common/app_error"
 )
 
-
-type Account struct{
-	Id string `json:"id" gorm:"column:id"`
-	Email *string `json:"email" gorm:"column:email"`
-	Password *string `json:"password" gorm:"column:password"`
+type Account struct {
+	Id       string  `json:"id,omitempty" gorm:"column:id"`
+	Email    *string `json:"email,omitempty" gorm:"column:email"`
+	Password *string `json:"password,omitempty" gorm:"column:password"`
 }
 
-func NewAccount(email, password string) *Account{
+func NewAccount(email, password string) *Account {
 	return &Account{
-		Email: &email,
+		Email:    &email,
 		Password: &password,
 	}
 }
 
-func (a *Account)TableName() string{
+func (a *Account) TableName() string {
 	return "accounts"
 }
+
 var (
 	ErrEmailExist = app_error.ErrConflictData(errors.New("Email already exist"), "EMAIL_EXIST", "Email have been taken")
 
@@ -37,7 +37,7 @@ var (
 	ErrNilPassword = app_error.ErrInvalidData(errors.New("Missing Password"), "PASSWOR_MISSING", "Password is required")
 )
 
-type LoginAccount struct{
-	Account *string `json:"account"`
-	Password *string `json:"password"`
+type LoginAccount struct {
+	Account  *string `json:"account,omitempty"`
+	Password *string `json:"password,omitempty"`
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/quocsi014/common"
 	"github.com/quocsi014/modules/conversation-request/service"
 	"net/http"
 
@@ -128,13 +129,18 @@ func (crh *ConversationRequestHandler) GetConversationRequestSent() func(*gin.Co
 		if senderId == "" {
 			return
 		}
-		conversationReqs, err := crh.service.GetConversationRequestSent(ctx, senderId)
+		paging := common.PagingBinding(ctx)
+		if paging == nil {
+			return
+		}
+		conversationReqs, err := crh.service.GetConversationRequestSent(ctx, senderId, paging)
 		if err != nil {
 			errResponse := app_error.NewErrorResponseWithAppError(err)
 			ctx.JSON(errResponse.Code, err)
 			return
 		}
-		ctx.JSON(http.StatusOK, conversationReqs)
+		pagingResponse := common.NewPagingResponse(paging, conversationReqs)
+		ctx.JSON(http.StatusOK, pagingResponse)
 	}
 }
 
@@ -144,13 +150,18 @@ func (crh *ConversationRequestHandler) GetConversationRequestReceived() func(*gi
 		if recipientId == "" {
 			return
 		}
-		conversationReqs, err := crh.service.GetConversationRequestReceived(ctx, recipientId)
+		paging := common.PagingBinding(ctx)
+		if paging == nil {
+			return
+		}
+		conversationReqs, err := crh.service.GetConversationRequestReceived(ctx, recipientId, paging)
 		if err != nil {
 			errReponse := app_error.NewErrorResponseWithAppError(err)
 			ctx.JSON(errReponse.Code, err)
 			return
 		}
-		ctx.JSON(http.StatusOK, conversationReqs)
+		pagingResponse := common.NewPagingResponse(paging, conversationReqs)
+		ctx.JSON(http.StatusOK, pagingResponse)
 	}
 }
 func (crh *ConversationRequestHandler) SetupRoute(group *gin.RouterGroup) {
