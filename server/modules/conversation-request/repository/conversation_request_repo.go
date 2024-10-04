@@ -50,7 +50,17 @@ func DeleteConversationRequest(ctx context.Context, db *gorm.DB, senderId, recip
 	return nil
 }
 func (r *ConversationRequestRepository) DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error {
-	return DeleteConversationRequest(ctx, r.db, senderId, recipientId)
+	db := r.db.Begin()
+	if err := db.Delete(userEntity.NewUserRelationship(senderId, recipientId), "user_id = ? and friend_id = ?", senderId, recipientId).Error; err != nil {
+		db.Rollback()
+		return app_error.ErrDatabase(err)
+	}
+	if err := DeleteConversationRequest(ctx, db, senderId, recipientId); err != nil {
+		db.Rollback()
+		return app_error.ErrDatabase(err)
+	}
+	db.Commit()
+	return nil
 }
 
 func (r *ConversationRequestRepository) CreateConversation(ctx context.Context, conversation *conversationEntity.Conversation) error {
