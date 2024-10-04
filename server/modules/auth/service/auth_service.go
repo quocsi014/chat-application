@@ -13,98 +13,83 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type IAuthRepository interface{
-	GetAccount(ctx context.Context, email string) (*entity.Account, error)
-	InserAccount(ctx context.Context, account *entity.Account) error
-}
-
-type IOTPRepository interface{
-	SetOtp(ctx context.Context, email, otp string) error
-	GetOtp(ctx context.Context, email string) (string, error)
-}
-
-type IAcccountCachingRepository interface{
-	StoreAccount(ctx context.Context, account entity.Account) error
-	GetAccount(ctx context.Context, email string) (*entity.Account, error)
-}
-
-type AuthService struct{
-	repository IAuthRepository
+type AuthService struct {
+	repository               IAuthRepository
 	accountCachingRepository IAcccountCachingRepository
-	jwtSecretKey string
+	jwtSecretKey             string
 }
 
-func (as *AuthService)GetJwtSecretKey() string{
+func (as *AuthService) GetJwtSecretKey() string {
 	return as.jwtSecretKey
 }
 
-func NewAuthService(repo IAuthRepository, accountCachingRepository IAcccountCachingRepository, jwtSecretKey string) *AuthService{
+func NewAuthService(repo IAuthRepository, accountCachingRepository IAcccountCachingRepository, jwtSecretKey string) *AuthService {
 	return &AuthService{
-		repository: repo,
+		repository:               repo,
 		accountCachingRepository: accountCachingRepository,
-		jwtSecretKey: jwtSecretKey,
+		jwtSecretKey:             jwtSecretKey,
 	}
 }
 
-func (as *AuthService)generateJwtToken(userId string) (string, error){
+func (as *AuthService) generateJwtToken(userId string) (string, error) {
 	jwtClaims := jwt.MapClaims{
 		"user_id": userId,
-		"exp": time.Now().Add(time.Hour*24).Unix(),
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
-	t := jwt.NewWithClaims( jwt.SigningMethodHS256, jwtClaims)
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
 	return t.SignedString([]byte(as.jwtSecretKey))
 }
 
-func (as *AuthService) Login(ctx context.Context, account entity.LoginAccount) (string, error){
-	if account.Password == nil{
+func (as *AuthService) Login(ctx context.Context, account entity.LoginAccount) (string, error) {
+	if account.Password == nil {
 		return "", entity.ErrBlankPassword
 	}
 
-	if account.Account == nil{
+	if account.Account == nil {
 		return "", app_error.ErrInvalidData(errors.New("Missing email"), "EMAIL_MISSING", "Email is required")
 	}
 
 	a, err := as.repository.GetAccount(ctx, *account.Account)
-	if err != nil{
-		if errors.Is(err, app_error.ErrRecordNotFound){
-			return "",app_error.ErrUnauthenticatedError(err, "Email or password is incorrect")	
+	if err != nil {
+		if errors.Is(err, app_error.ErrRecordNotFound) {
+			return "", app_error.ErrUnauthenticatedError(err, "Email or password is incorrect")
 		}
 		return "", app_error.ErrDatabase(err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword( []byte(*a.Password), []byte(*account.Password)); err != nil{
-		return "",app_error.ErrUnauthenticatedError(err, "Email or Password is incorrect")
+	if err := bcrypt.CompareHashAndPassword([]byte(*a.Password), []byte(*account.Password)); err != nil {
+		return "", app_error.ErrUnauthenticatedError(err, "Email or Password is incorrect")
 	}
 
 	jwtToken, err := as.generateJwtToken(a.Id)
-	if err != nil{
+	if err != nil {
 		return "", app_error.ErrInternal(err)
 	}
 
 	return jwtToken, nil
 }
 
-func (as *AuthService)isEmailTaken(ctx context.Context, email string) (bool, error){
-	if _, err := as.repository.GetAccount(ctx, email); err == nil{
+func (as *AuthService) isEmailTaken(ctx context.Context, email string) (bool, error) {
+	if _, err := as.repository.GetAccount(ctx, email); err == nil {
 		return true, app_error.ErrConflictData(nil, "EMAIL_EXIST", "Email has been taken")
-	}else{
-		if !errors.Is(err, app_error.ErrRecordNotFound){
+	} else {
+		if !errors.Is(err, app_error.ErrRecordNotFound) {
 			return false, app_error.ErrDatabase(err)
 		}
 	}
 	return false, nil
 }
 
-func (as *AuthService)generateJwtTokenWithEmail(email string) (string, error){
+func (as *AuthService) generateJwtTokenWithEmail(email string) (string, error) {
 	jwtClaims := jwt.MapClaims{
 		"email": email,
-		"exp": time.Now().Add(time.Minute*5).Unix(),
+		"exp":   time.Now().Add(time.Minute * 5).Unix(),
 	}
-	t := jwt.NewWithClaims( jwt.SigningMethodHS256, jwtClaims)
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
 	return t.SignedString([]byte(as.jwtSecretKey))
 }
 
-func validateEmail(email string) bool{
+func validateEmail(email string) bool {
 	const emailRegex = `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
 
 	re := regexp.MustCompile(emailRegex)
@@ -112,20 +97,20 @@ func validateEmail(email string) bool{
 	return re.MatchString(email)
 }
 
-func (as *AuthService) Register(ctx context.Context, account entity.Account) (string, error){
-	if account.Email == nil{
+func (as *AuthService) Register(ctx context.Context, account entity.Account) (string, error) {
+	if account.Email == nil {
 		return "", entity.ErrNilEmail
 	}
 
-	if account.Password == nil{
+	if account.Password == nil {
 		return "", entity.ErrNilPassword
 	}
 
-	if len(*account.Password) < 6{
+	if len(*account.Password) < 6 {
 		return "", entity.ErrInvalidPassword
 	}
 
-	if !validateEmail(*account.Email){
+	if !validateEmail(*account.Email) {
 		return "", entity.ErrInvaliEmail
 	}
 
@@ -140,30 +125,29 @@ func (as *AuthService) Register(ctx context.Context, account entity.Account) (st
 
 	hashedPasswordString := string(hashedPassword)
 	account.Password = &hashedPasswordString
-	
-	if err := as.accountCachingRepository.StoreAccount(ctx, account); err != nil{
-		return "",app_error.ErrDatabase(err)
+
+	if err := as.accountCachingRepository.StoreAccount(ctx, account); err != nil {
+		return "", app_error.ErrDatabase(err)
 	}
 	token, err := as.generateJwtTokenWithEmail(*account.Email)
-	if err != nil{
+	if err != nil {
 		return "", app_error.ErrInternal(err)
 	}
 	return token, nil
 }
 
-func (as *AuthService) VerifyAccount(ctx context.Context, email string) (string, error){
+func (as *AuthService) VerifyAccount(ctx context.Context, email string) (string, error) {
 	account, err := as.accountCachingRepository.GetAccount(ctx, email)
 	account.Id = uuid.NewString()
-	if err != nil{
+	if err != nil {
 		return "", app_error.ErrDatabase(err)
 	}
-	if err := as.repository.InserAccount(ctx, account); err != nil{
+	if err := as.repository.InserAccount(ctx, account); err != nil {
 		return "", app_error.ErrDatabase(err)
 	}
 	accessToken, err := as.generateJwtToken(account.Id)
-	if err != nil{
+	if err != nil {
 		return "", app_error.ErrInternal(err)
 	}
 	return accessToken, nil
 }
-

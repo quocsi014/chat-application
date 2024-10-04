@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"github.com/quocsi014/modules/user_information/service"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,20 +14,13 @@ import (
 	"github.com/quocsi014/modules/user_information/entity"
 )
 
-type IUserService interface {
-	CreateUser(ctx context.Context, user *entity.User) error
-	UpdateUser(ctx context.Context, userId string, user *entity.User) error
-	GetUserByUsername(ctx context.Context, username string) (*entity.User, error)
-	GetUserById(ctx context.Context, userId string) (*entity.User, error)
-	GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]*entity.User, error)
-}
 type UserHandler struct {
-	service IUserService
+	service service.IUserService
 }
 
-func NewUserHandler(service IUserService) *UserHandler {
+func NewUserHandler(userService service.IUserService) *UserHandler {
 	return &UserHandler{
-		service: service,
+		service: userService,
 	}
 }
 

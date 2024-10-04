@@ -1,65 +1,71 @@
 package entity
 
 import (
+	"errors"
+	"github.com/quocsi014/common/app_error"
 	"time"
 )
 
-type Conversation struct{
-	Id string `json:"id" gorm:"column:id"`
-	IsGroup bool `json:"is_group" gorm:"column:is_group"`
+type Conversation struct {
+	Id              string     `json:"id" gorm:"column:id"`
+	IsGroup         bool       `json:"is_group" gorm:"column:is_group"`
 	LastMessageTime *time.Time `json:"last_message_time" gorm:"column:last_message_time"`
-	LastMessageId *string `json:"last_message_id" gorm:"column:last_message_id"`
-	CreatedAt *time.Time `json:"created_at" gorm:"column:created_at"`
+	LastMessageId   *string    `json:"last_message_id" gorm:"column:last_message_id"`
+	CreatedAt       *time.Time `json:"created_at" gorm:"column:created_at"`
 }
 
-func NewConversation(id string, isGroup bool) *Conversation{
+type ConversationResponse struct {
+	Conversation
+	ConversationDetail
+	LastMessage    string `json:"message" gorm:"column:message"`
+	UserNameSender string `json:"user_name_sender" gorm:"column:user_name_sender"`
+}
+
+func NewConversation(id string, isGroup bool) *Conversation {
 	now := time.Now()
 	return &Conversation{
-		Id: id,
-		IsGroup: isGroup,
+		Id:        id,
+		IsGroup:   isGroup,
 		CreatedAt: &now,
 	}
 }
 
-func (c *Conversation)TableName() string{
+func (c *Conversation) TableName() string {
 	return "conversations"
 }
 
-type ConversationDetail struct{
-	Name string `json:"name" gorm:"column:name"`
-	Avatar string `json:"avatar_url" gorm:"column:avatar_url"`
+type ConversationDetail struct {
+	Name      string `json:"name" gorm:"column:name"`
+	Avatar    string `json:"avatar_url" gorm:"column:avatar_url"`
 	CreatedBy string `json:"created_by" gorm:"created_by"`
 }
 
-func (cd *ConversationDetail)TableName() string{
+var (
+	ErrBlankName   = app_error.ErrInvalidData(errors.New("Converstion name is blank"), "BLANK_NAME", "Conversation name cannot be blank")
+	ErrNameMissing = app_error.ErrInvalidData(errors.New("Conversation name is missing"), "NAME_MISSING", "Conversation name is required")
+)
+
+func (cd *ConversationDetail) TableName() string {
 	return "conversation_details"
 }
 
-
-type ConversationMembership struct{
-	ConversationId string `json:"conversation_id" gorm:"column:conversation_id"`
-	UserId string `json:"user_id" gorm:"column:user_id"`
-	Role string `json:"role" gorm:"column:role"`
-	JoinedTime *time.Time `json:"joined_time" gorm:"columnjoined_time"`
+type ConversationMembership struct {
+	ConversationId string     `json:"conversation_id" gorm:"column:conversation_id"`
+	UserId         string     `json:"user_id" gorm:"column:user_id"`
+	Role           string     `json:"role" gorm:"column:role"`
+	JoinedTime     *time.Time `json:"joined_time" gorm:"columnjoined_time"`
 }
 
-func (cm *ConversationMembership)TableName() string {
+func (cm *ConversationMembership) TableName() string {
 	return "conversation_memberships"
 }
 
-func NewConversationMembershipMemberRole(conversationId, userId string) *ConversationMembership{
+func NewConversationMembershipMemberRole(conversationId, userId string) *ConversationMembership {
 	now := time.Now()
 	return &ConversationMembership{
 		ConversationId: conversationId,
-		UserId: userId,
-		Role: "MEMBER",
-		JoinedTime: &now,
+		UserId:         userId,
+		Role:           "MEMBER",
+		JoinedTime:     &now,
 	}
-}
-
-type ConversationResponse struct{
-	Conversation
-	ConversationDetail
-	LastMessage string`json:"message" gorm:"column:message"`
-	UserNameSender string `json:"user_name_sender" gorm:"column:user_name_sender"`
 }

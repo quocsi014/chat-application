@@ -1,7 +1,9 @@
 package entity
 
 import (
+	"errors"
 	"github.com/google/uuid"
+	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/user_information/entity"
 	"time"
 )
@@ -27,3 +29,8 @@ func NewMessage() *Message {
 func (m *Message) TableName() string {
 	return "messages"
 }
+
+var (
+	ErrBlankContent   = app_error.ErrInvalidData(errors.New("content is blank"), "BLANK_CONTENT", "Content cannot be blank")
+	ErrContentMissing = app_error.ErrInvalidData(errors.New("content is missing"), "CONTENT_MISSING", "content is required")
+)

@@ -3,31 +3,19 @@ package service
 import (
 	"context"
 	"errors"
-	
+	"github.com/quocsi014/modules/user_information/service"
+
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/conversation-request/entity"
 	conversationEntity "github.com/quocsi014/modules/conversation/entity"
-	userEntity "github.com/quocsi014/modules/user_information/entity"
 )
-
-type IConversationRequestRepository interface {
-	CreateConversationRequest(ctx context.Context, req *entity.ConversationRequest) error
-	AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*conversationEntity.Conversation, error)
-	DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error
-	GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error)
-	GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error)
-}
-
-type IUserService interface {
-	GetUserById(ctx context.Context, userId string) (*userEntity.User, error)
-}
 
 type ConversationRequestService struct {
 	repo        IConversationRequestRepository
-	userService IUserService
+	userService service.IUserService
 }
 
-func NewConversationRequestService(repo IConversationRequestRepository, userService IUserService) *ConversationRequestService {
+func NewConversationRequestService(repo IConversationRequestRepository, userService service.IUserService) *ConversationRequestService {
 	return &ConversationRequestService{
 		repo:        repo,
 		userService: userService,
@@ -57,21 +45,21 @@ func (s *ConversationRequestService) CreateConversationRequest(ctx context.Conte
 	return nil
 }
 
-func (s *ConversationRequestService) AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*conversationEntity.Conversation, error){
+func (s *ConversationRequestService) AcceptConversationRequest(ctx context.Context, senderId, recipientId string) (*conversationEntity.Conversation, error) {
 	conversation, err := s.repo.AcceptConversationRequest(ctx, senderId, recipientId)
-	if err != nil{
-		if errors.Is(err, app_error.ErrRecordNotFound){
+	if err != nil {
+		if errors.Is(err, app_error.ErrRecordNotFound) {
 			return nil, app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST", "no conversation requests found")
 		}
 		return nil, app_error.ErrDatabase(err)
-	}	
+	}
 	return conversation, nil
 }
 
-func (s *ConversationRequestService) DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error{
+func (s *ConversationRequestService) DeleteConversationRequest(ctx context.Context, senderId, recipientId string) error {
 	err := s.repo.DeleteConversationRequest(ctx, senderId, recipientId)
-	if err != nil{
-		if errors.Is(err, app_error.ErrRecordNotFound){
+	if err != nil {
+		if errors.Is(err, app_error.ErrRecordNotFound) {
 			return app_error.ErrNotFound(err, "CONV_REQ_NOT_EXIST", "no conversation requests found")
 		}
 		return app_error.ErrDatabase(err)
@@ -79,7 +67,7 @@ func (s *ConversationRequestService) DeleteConversationRequest(ctx context.Conte
 	return nil
 }
 
-func (s *ConversationRequestService) GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error){
+func (s *ConversationRequestService) GetConversationRequestSent(ctx context.Context, senderId string) ([]entity.ConversationRequestDetail, error) {
 	conversationReqs, err := s.repo.GetConversationRequestSent(ctx, senderId)
 	if err != nil {
 		return nil, app_error.ErrDatabase(err)
@@ -87,7 +75,7 @@ func (s *ConversationRequestService) GetConversationRequestSent(ctx context.Cont
 	return conversationReqs, nil
 }
 
-func (s *ConversationRequestService) GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error){
+func (s *ConversationRequestService) GetConversationRequestReceived(ctx context.Context, recipientId string) ([]entity.ConversationRequestDetail, error) {
 	conversationReqs, err := s.repo.GetConversationRequestReceived(ctx, recipientId)
 	if err != nil {
 		return nil, app_error.ErrDatabase(err)

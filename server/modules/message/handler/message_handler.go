@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/quocsi014/common"
@@ -9,19 +8,15 @@ import (
 	"github.com/quocsi014/helper"
 	"github.com/quocsi014/middleware"
 	"github.com/quocsi014/modules/message/entity"
+	"github.com/quocsi014/modules/message/service"
 	"net/http"
 )
 
-type IMessageService interface {
-	SendMessage(ctx context.Context, message *entity.Message) error
-	GetMessages(ctx context.Context, paging *common.Paging, conversationId string) ([]entity.Message, error)
-}
-
 type MessageHandler struct {
-	service IMessageService
+	service service.IMessageService
 }
 
-func NewMessageHandler(service IMessageService) *MessageHandler {
+func NewMessageHandler(service service.IMessageService) *MessageHandler {
 	return &MessageHandler{
 		service: service,
 	}

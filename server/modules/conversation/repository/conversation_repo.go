@@ -8,7 +8,7 @@ import (
 )
 
 type ConversationRepository interface {
-	GetConversations(userId string) ([]entity.ConversationResponse, error)
+	GetConversations(userId string, paging *common.Paging) ([]entity.ConversationResponse, error)
 }
 
 type conversationRepository struct {
