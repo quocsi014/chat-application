@@ -13,7 +13,7 @@ type Message struct {
 	ConversationId string     `json:"conversation_id,omitempty" gorm:"column:conversation_id"`
 	SenderId       string     `json:"user_id,omitempty" gorm:"column:user_id"`
 	Content        *string    `json:"message,omitempty" gorm:"column:message"`
-	ReplyFor       *string    `json:"message,omitempty" gorm:"column:reply_for"`
+	ReplyFor       *string    `json:"reply_for,omitempty" gorm:"column:reply_for"`
 	SendingTime    *time.Time `json:"sending_time,omitempty" gorm:"column:sending_time"`
 	//Message        *Message   `json:"reply_for,omitempty" gorm:"foreignKey:ReplyFor"`
 	Sender entity.User `json:"user,omitempty" gorm:"foreignKey:SenderId;references:Id"`
