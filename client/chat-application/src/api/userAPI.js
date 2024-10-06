@@ -31,7 +31,7 @@ export const getUserById = (token) => {
       Authorization: `Bearer ${token}`,
     },
   };
-  return axios.get(`${API_URL}/users/profile`, config);
+  return axios.get(`${API_URL}/users/profile/me`, config);
 };
 
 export const searchUsers = (searchTerm, page, limit) => {

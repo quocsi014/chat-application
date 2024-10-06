@@ -4,6 +4,7 @@ import { useDispatch } from "react-redux";
 import { toggleSearchUser } from "../../redux/SearchUser/searchUserSlice";
 import { useEffect, useState } from "react";
 import { getConversations } from "../../api/conversationAPI";
+import { setCurrentChat } from "../../redux/conversation/conversationSlice";
 
 function ConversationList(){
   const [conversations, setConversations] = useState([])
@@ -15,16 +16,13 @@ function ConversationList(){
   useEffect(()=>{
     getConversations()
     .then(res => {
-      setConversations(res.data.conversations)
-      console.table(res.data.conversations)
+      setConversations(res.data.items)
+      dispatch(setCurrentChat({chat: res.data.items[0]}))
     })
     .catch(error => {
       console.log(error)
     })
   },[])
-
-
-
   
   return(
     <div
@@ -48,11 +46,7 @@ function ConversationList(){
           {conversations.map((chat) => (
             <Chat
               key={chat.id}
-              avatarURL = { chat.avatar_url}
-              lastMessage = {chat.message}
-              userNameSender = {chat.user_name_sender}
-              isGroup = {chat.is_group}
-              name = {chat.name}
+              chat = {chat}
             />
           ))}
         </div>

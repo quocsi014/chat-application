@@ -8,26 +8,28 @@ import SearchUsersModal from "./SearchUsersModal";
 import { BiSearch } from "react-icons/bi";
 import ConversationList from "../pages/conversation/ConversationList";
 import Navigator from "./Navigator";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ChatBox from "./ChatBox";
+import { setMe } from "../redux/me/meSlice";
 
 function AppLayout() {
   const navigate = useNavigate();
-  
+
   const isSearchModalOpen = useSelector(
     (state) => state.searchUser.isSearchUserOpen
   );
 
+  const dispatch = useDispatch()
+
   const sectionPadding = "p-5";
 
-  // Tạo fake data cho chats
 
   useEffect(() => {
     const token = getCookie("access_token");
     if (token) {
       getUserById(token)
-        .then(() => {
-          // Nếu thành công, không làm gì cả
+        .then((res) => {
+          dispatch(setMe({ me: res.data }));
         })
         .catch((error) => {
           if (error.response && error.response.status === 401) {
@@ -40,7 +42,6 @@ function AppLayout() {
       navigate("/login");
     }
   }, [navigate]);
-
 
   return (
     <div className="w-screen h-screen bg-bg py-4 px-2 flex">

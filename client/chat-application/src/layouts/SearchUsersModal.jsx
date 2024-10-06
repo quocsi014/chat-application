@@ -10,6 +10,8 @@ import defaultAvatar from "../assets/default_avatar.png";
 import { BiX } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleSearchUser } from "../redux/SearchUser/searchUserSlice";
+import { deleteRequest, sendRequest } from "../api/conversationRequestAPI";
+import BriefUser from "../components/BriefUser";
 
 function SearchUsersModal() {
   const isOpen = useSelector((state) => state.searchUser.isSearchUserOpen);
@@ -42,8 +44,7 @@ function SearchUsersModal() {
 
     searchUsers(searchTerm, nextPageNumber.current, 10)
       .then((res) => {
-        console.log(res.data);
-        setSearchResults((prev) => [...prev, ...res.data.users]);
+        setSearchResults((prev) => [...prev, ...res.data.items]);
         nextPageNumber.current = nextPageNumber.current + 1;
         if (totalPages.current === null) {
           totalPages.current = res.data.paging.total_page;
@@ -89,6 +90,36 @@ function SearchUsersModal() {
 
   const onClose = () => {
     disPatch(toggleSearchUser());
+  };
+
+  const updateRelationship = (userId, relationship)=>{
+    setSearchResults((preSerchResults) =>
+      preSerchResults.map((user) => {
+        if (user.id == userId) {
+          user.user_relationship = relationship;
+        }
+        return user;
+      })
+    );
+  }
+  const handleSendRequest = (receiverId) => {
+    sendRequest(receiverId)
+      .then((res) => {
+        updateRelationship(receiverId, {status: 'PENDING'})
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  const handleCancelRequest = (receiverId) => {
+    deleteRequest(receiverId)
+      .then(() => {
+        updateRelationship(receiverId, {})
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (
@@ -137,44 +168,51 @@ function SearchUsersModal() {
                   key={user.id}
                   className="flex justify-between hover:bg-gray-100 py-2 rounded-md"
                 >
-                  <div className="flex">
-                    <img
-                      src={user.avatar_url || defaultAvatar}
-                      alt={user.username}
-                      className="w-10 h-10 object-cover rounded-full mr-2"
-                    />
-                    <div className="flex flex-col">
-                      <h3 className="font-bold">
-                        {user.firstname} {user.lastname}
-                      </h3>
-                      <p className="text-gray-500">@{user.username}</p>
-                    </div>
-                  </div>
+                  <BriefUser user={user} />
                   <div className="flex h-full items-center px-2">
-                    {
-                      !user.user_relationship.status?
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-blue-400 hover:bg-blue-500 text-white rounded-md">request</button>
-                      :
-                      user.user_relationship.status == 'ACCEPTED'?
+                    {!user.user_relationship.status ? (
+                      <button
+                        onClick={() => {
+                          handleSendRequest(user.id);
+                        }}
+                        className="ml-2 px-2 py-1 min-w-20 bg-blue-400 hover:bg-blue-500 text-white rounded-md"
+                      >
+                        request
+                      </button>
+                    ) : user.user_relationship.status == "ACCEPTED" ? (
                       <>
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-gray-400 hover:bg-gray-500 text-white rounded-md">block</button>
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-gray-100 hover:bg-white rounded-md">chat</button>
+                        <button className="ml-2 px-2 py-1 min-w-20 bg-gray-400 hover:bg-gray-500 text-white rounded-md">
+                          block
+                        </button>
+                        <button className="ml-2 px-2 py-1 min-w-20 bg-gray-100 hover:bg-white rounded-md">
+                          chat
+                        </button>
                       </>
-                      :
-                      user.user_relationship.status == 'PENDING' && user.id == user.user_relationship.user_id ?
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-gray-300 rounded-md">cancel</button>
-                      :
-                      user.user_relationship.status == 'PENDING' && user.id != user.user_relationship.user_id ?
+                    ) : user.user_relationship.status == "PENDING" &&
+                      user.id == user.user_relationship.friend_id ? (
+                      <button onClick={()=>{handleCancelRequest(user.id)}} className="ml-2 px-2 py-1 min-w-20 bg-gray-300 rounded-md">
+                        cancel
+                      </button>
+                    ) : user.user_relationship.status == "PENDING" &&
+                      user.id != user.user_relationship.friend_id ? (
                       <>
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-red-400 hover:bg-red-500 text-white rounded-md">reject</button>
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-blue-400 hover:bg-blue-500 text-white rounded-md">accept</button>
+                        <button className="ml-2 px-2 py-1 min-w-20 bg-red-400 hover:bg-red-500 text-white rounded-md">
+                          reject
+                        </button>
+                        <button className="ml-2 px-2 py-1 min-w-20 bg-blue-400 hover:bg-blue-500 text-white rounded-md">
+                          accept
+                        </button>
                       </>
-                      :
-                      user.user_relationship.status == 'BLOCKED' && user.id == user.user_relationship.blocked_user_id?                      
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-gray-300 rounded-md">unblock</button>
-                      :
-                      <button className="ml-2 px-2 py-1 min-w-20 bg-gray-300 rounded-md">view</button>
-                    }
+                    ) : user.user_relationship.status == "BLOCKED" &&
+                      user.id == user.user_relationship.blocked_user_id ? (
+                      <button className="ml-2 px-2 py-1 min-w-20 bg-gray-300 rounded-md">
+                        unblock
+                      </button>
+                    ) : (
+                      <button className="ml-2 px-2 py-1 min-w-20 bg-gray-300 rounded-md">
+                        view
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

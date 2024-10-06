@@ -5,13 +5,15 @@ import {
 } from "../../api/conversationRequestAPI";
 import defaultAvatar from "../../assets/default_avatar.png";
 import { useState, useEffect } from "react";
+import BriefUser from "../../components/BriefUser";
 function ReceivedReqList() {
   const [reqList, setReqList] = useState([]);
 
   useEffect(() => {
     getRequestReceived()
       .then((res) => {
-        setReqList(res.data);
+        setReqList(res.data.items);
+        console.log(res.data.items)
       })
       .catch((error) => {
         console.log(error);
@@ -53,19 +55,7 @@ function ReceivedReqList() {
               key={req.sender.id}
               className="flex items-center py-2 rounded-md justify-between"
             >
-              <div className="flex">
-                <img
-                  src={req.sender.avatar_url || defaultAvatar}
-                  alt={req.sender.username}
-                  className="w-10 h-10 object-cover rounded-full mr-2"
-                />
-                <div className="flex flex-col">
-                  <h3 className="font-bold">
-                    {req.sender.firstname} {req.sender.lastname}
-                  </h3>
-                  <p className="text-gray-500">@{req.sender.username}</p>
-                </div>
-              </div>
+              <BriefUser user={req.sender} />
               <div>
                 <button
                   onClick={(e) => {
