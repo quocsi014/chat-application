@@ -2,12 +2,14 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/quocsi014/common"
 
 	"github.com/google/uuid"
 	"github.com/quocsi014/common/app_error"
 	"github.com/quocsi014/modules/conversation-request/entity"
 	conversationEntity "github.com/quocsi014/modules/conversation/entity"
+	messageEntity "github.com/quocsi014/modules/message/entity"
 	userEntity "github.com/quocsi014/modules/user_information/entity"
 	"gorm.io/gorm"
 )
@@ -96,6 +98,19 @@ func (r *ConversationRequestRepository) AcceptConversationRequest(ctx context.Co
 		return nil, err
 	}
 
+	creationMessage := messageEntity.NewCreateConversationMessage(conversationId.String())
+	if err := tx.Table(creationMessage.TableName()).Create(creationMessage).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	conversation.LastMessageTime = creationMessage.SendingTime
+	conversation.LastMessageId = &creationMessage.Id
+	if err := tx.Table(conversation.TableName()).Where("id = ?", conversation.Id).Updates(conversation).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
 	senderMembership := conversationEntity.NewConversationMembershipMemberRole(conversationId.String(), senderId)
 	recipientMembership := conversationEntity.NewConversationMembershipMemberRole(conversationId.String(), recipientId)
 
@@ -112,7 +127,7 @@ func (r *ConversationRequestRepository) AcceptConversationRequest(ctx context.Co
 }
 
 func (r *ConversationRequestRepository) GetConversationRequestSent(ctx context.Context, senderId string, paging *common.Paging) ([]entity.ConversationRequestDetail, error) {
-	var conversationReqs []entity.ConversationRequestDetail
+	conversationReqs := make([]entity.ConversationRequestDetail, 0)
 
 	var count int64
 	db := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("sender_id = ?", senderId)
@@ -120,21 +135,22 @@ func (r *ConversationRequestRepository) GetConversationRequestSent(ctx context.C
 		return nil, app_error.ErrDatabase(err)
 	}
 	paging.Page = int(count/int64(paging.Limit) + 1)
-	if err := db.Preload("Sender").Limit(paging.Limit).Offset(paging.Page * (paging.Limit - 1)).Preload("Recipient").Find(&conversationReqs).Error; err != nil {
+	if err := db.Limit(paging.Limit).Offset((paging.Page - 1) * (paging.Limit)).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
 		return nil, err
 	}
+	fmt.Println(count)
 	return conversationReqs, nil
 }
 
 func (r *ConversationRequestRepository) GetConversationRequestReceived(ctx context.Context, recipientId string, paging *common.Paging) ([]entity.ConversationRequestDetail, error) {
-	var conversationReqs []entity.ConversationRequestDetail
+	conversationReqs := make([]entity.ConversationRequestDetail, 0)
 	var count int64
 	db := r.db.Table((&entity.ConversationRequestDetail{}).TableName()).Where("recipient_id = ?", recipientId)
 	if err := db.Count(&count).Error; err != nil {
 		return nil, app_error.ErrDatabase(err)
 	}
 	paging.Page = int(count/int64(paging.Limit) + 1)
-	if err := db.Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
+	if err := db.Limit(paging.Limit).Offset((paging.Page - 1) * (paging.Limit)).Preload("Sender").Preload("Recipient").Find(&conversationReqs).Error; err != nil {
 		return nil, err
 	}
 	return conversationReqs, nil

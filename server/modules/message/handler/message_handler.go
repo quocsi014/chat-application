@@ -33,7 +33,7 @@ func (mh *MessageHandler) SendMessage() func(*gin.Context) {
 		if userId == "" {
 			return
 		}
-		message.SenderId = userId
+		message.SenderId = &userId
 		conversation_id := ctx.Param("conversation_id")
 		message.ConversationId = conversation_id
 		err := mh.service.SendMessage(ctx, message)
@@ -49,12 +49,7 @@ func (mh *MessageHandler) SendMessage() func(*gin.Context) {
 
 func (mh *MessageHandler) GetMessages() func(*gin.Context) {
 	return func(ctx *gin.Context) {
-		paging := &(common.Paging{})
-		if err := ctx.ShouldBind(paging); err != nil {
-			ctx.JSON(http.StatusBadRequest, app_error.ErrInvalidRequest(err))
-			return
-		}
-		paging.Process()
+		paging := common.PagingBinding(ctx)
 		conversationId := ctx.Param("conversation_id")
 
 		messages, err := mh.service.GetMessages(ctx, paging, conversationId)
@@ -64,11 +59,8 @@ func (mh *MessageHandler) GetMessages() func(*gin.Context) {
 			ctx.JSON(errResponse.Code, err)
 			return
 		}
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"paging":   paging,
-			"messages": messages,
-		})
+		pagingResponse := common.NewPagingResponse(paging, messages)
+		ctx.JSON(http.StatusOK, pagingResponse)
 	}
 }
 

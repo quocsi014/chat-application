@@ -108,6 +108,7 @@ func main() {
 				messageHandler.SetupRoute(messageGroup)
 			}
 		}
+    v1Group.GET("/ws", message_handler.HandleMessageWebSocket())
 
 	}
 	r.Run()

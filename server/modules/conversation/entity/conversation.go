@@ -2,8 +2,9 @@ package entity
 
 import (
 	"errors"
-	"github.com/quocsi014/common/app_error"
 	"time"
+
+	"github.com/quocsi014/common/app_error"
 )
 
 type Conversation struct {

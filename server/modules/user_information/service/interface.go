@@ -11,7 +11,7 @@ type IUserRepository interface {
 	FindUserById(ctx context.Context, id string) (*entity.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*entity.User, error)
 	UpdateUser(ctx context.Context, user *entity.User) error
-	GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]*entity.User, error)
+	GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]entity.User, error)
 }
 
 type IUserService interface {
@@ -19,5 +19,5 @@ type IUserService interface {
 	UpdateUser(ctx context.Context, userId string, user *entity.User) error
 	GetUserByUsername(ctx context.Context, username string) (*entity.User, error)
 	GetUserById(ctx context.Context, userId string) (*entity.User, error)
-	GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]*entity.User, error)
+	GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]entity.User, error)
 }

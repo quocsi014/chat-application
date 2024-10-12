@@ -156,8 +156,8 @@ func (crh *ConversationRequestHandler) GetConversationRequestReceived() func(*gi
 		}
 		conversationReqs, err := crh.service.GetConversationRequestReceived(ctx, recipientId, paging)
 		if err != nil {
-			errReponse := app_error.NewErrorResponseWithAppError(err)
-			ctx.JSON(errReponse.Code, err)
+			errResponse := app_error.NewErrorResponseWithAppError(err)
+			ctx.JSON(errResponse.Code, err)
 			return
 		}
 		pagingResponse := common.NewPagingResponse(paging, conversationReqs)

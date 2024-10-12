@@ -157,7 +157,7 @@ func (service *UserService) GetUserById(ctx context.Context, userId string) (*en
 	return user, nil
 }
 
-func (service *UserService) GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]*entity.User, error) {
+func (service *UserService) GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]entity.User, error) {
 	users, err := service.repository.GetUsersByUsername(ctx, username, paging)
 	if err != nil {
 		fmt.Println("Error:", err.Error())

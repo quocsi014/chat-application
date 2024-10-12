@@ -32,7 +32,7 @@ func (mr *MessageRepository) GetMessages(ctx context.Context, paging *common.Pag
 	}
 
 	paging.TotalPage = int64(totalRows)/int64(paging.Limit) + 1
-	var messages []entity.Message
+	messages := make([]entity.Message, 0)
 	if err := db.Limit(paging.Limit).Offset((paging.Page - 1) * paging.Limit).Preload("Sender").Find(&messages).Error; err != nil {
 		return nil, app_error.ErrDatabase(err)
 	}

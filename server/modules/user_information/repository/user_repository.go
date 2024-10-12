@@ -50,8 +50,8 @@ func (repo *UserRepository) GetUserByUsername(ctx context.Context, username stri
 	return &user, nil
 }
 
-func (repo *UserRepository) GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]*entity.User, error) {
-	var users []*entity.User
+func (repo *UserRepository) GetUsersByUsername(ctx context.Context, username string, paging *common.Paging) ([]entity.User, error) {
+	users := make([]entity.User, 0)
 	var totalRows int64
 
 	db := repo.db.Table((&entity.User{}).TableName()).Where("username LIKE ?", "%"+username+"%")

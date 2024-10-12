@@ -109,12 +109,7 @@ func (handler *UserHandler) GetUserProfileById() func(ctx *gin.Context) {
 
 func (handler *UserHandler) GetUserProfiles() func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
-		var paging common.Paging
-		if err := ctx.ShouldBind(&paging); err != nil {
-			ctx.JSON(http.StatusBadRequest, app_error.ErrInvalidRequest(err))
-			return
-		}
-		paging.Process()
+		paging := common.PagingBinding(ctx)
 
 		username := ctx.Query("username")
 		token, _ := ctx.Get("token")
@@ -125,16 +120,14 @@ func (handler *UserHandler) GetUserProfiles() func(ctx *gin.Context) {
 		}
 		userId := jwtMapClaims["user_id"].(string)
 		ctxWithUserId := context.WithValue(ctx.Request.Context(), "userId", userId)
-		users, err := handler.service.GetUsersByUsername(ctxWithUserId, username, &paging)
+		users, err := handler.service.GetUsersByUsername(ctxWithUserId, username, paging)
 		if err != nil {
 			errResponse := app_error.NewErrorResponseWithAppError(err)
 			ctx.JSON(errResponse.Code, errResponse.Err)
 			return
 		}
-		ctx.JSON(http.StatusOK, gin.H{
-			"users":  users,
-			"paging": paging,
-		})
+		pagingResponse := common.NewPagingResponse(paging, users)
+		ctx.JSON(http.StatusOK, pagingResponse)
 	}
 }
 
